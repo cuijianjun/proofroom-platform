@@ -1,8 +1,12 @@
-# ProofRoom active · 2026-11-14
-目标：新平台完整本地开发→全验后预览；Web/API/Worker分离、普通PG。PM补需求正本../需求规格与实施方案.md v1.1§19（16UX/39AT）；spec/tasks/acceptance在specs/001-proofroom-platform。
-根 /Users/cjjxw/codex/摄影选片平台/proofroom。Git eff48d0→agent/proofroom-local-main，原码移upstream保留；未commit/push/部署。旧WorkBuddy工程/服务不动。
-完成T001-009/011-028（T010媒体导出保下游）；T031-032已验待checkbox更新；T030等M6下载空间收口。M5后端17绿（含真实SIGKILL Worker、缺dispatch扫描恢复4→P2、源SHA），浏览器10+完成未知重试1绿、共享23绿；触摸分支RED→修ratio/dx/dy→两条GREEN（合成非真机）、clipboard读回；types/架构/三服务build绿。证据acceptance及/tmp/proofroom-qa/m5-*.log。独审已报告项全关闭。
-T029原生窗口未完成：Chrome app目标被其他窗口变化，工具拒绝；Safari noWindows/timeout；Chrome purpose浏览器不可用。未用setFiles冒充。CUA已completion_summary。新建自有Chrome空窗口留存，未动旧tab。native样图/tmp/proofroom-qa/native-originals、native-state.json仅账号/sid/id（勿扩散），本轮无照片上传。QA supervisor工具session88759待停，只停本任务进程，PG/S3保留。
-下一步M6 T033-038：严格精修映射/清单版本/齐套P4/30天/补片旧集合有效/可撤销源与3ZIP/续期/CAS与Owner纠正/交付优先UI/CRC-SHA。M7-8尚未做，不交最终预览。先源码/受影响增量，再独审。
-固定Node /Users/cjjxw/.workbuddy/binaries/node/versions/22.22.2-6/bin。PG17:18432 dev/test；签名S3rver18190是本地替身。QA18186/18184/.next-qa；Web build用.next，勿竞争生成物。迁移002-010已应用不可改，只加011+。.env0600不打印；Web剥离DB/S3/APP_SECRET，APIWorker runtime DSN。
-关键：storage PUT前持久tombstone、跨进程资源锁；引用含upload_items/photos，防误删源；idempotent/withTx可复用锁连接。未知请求后任意失败保原key/payload；PIN不入草稿、客户草稿用projectUUID。备注原文/双方星色同源，P3改动需重提；未完成集合绝不假零。
+# ProofRoom active · 原型待确认 / 前后端已提交
+项目 /Users/cjjxw/codex/摄影选片平台/proofroom；agent/proofroom-local-main。用户2026-11-15明确授权前后端全部本地commit，已完成27cb7b3（772文件，521原码重命名至upstream保留）；无推送/部署。该提交前的历史交接保存在git 27cb7b3:_codex/sessions/proofroom.md及现历史文件中，不作为当前自动待办。
+
+Web apps/web、API apps/api、Worker apps/worker和packages同一仓库，不到旧PicPeak/WorkBuddy或控制器提交。当前功能仍为React常驻工作台/普通PG、摄影师确认才占档、压缩预览/源文件下载。M21两端布局补丁已在源码，上一批23项增量/types/Webbuild/11包guard证据位于/tmp/proofroom-qa/responsive-pages；此次commit未重跑全量。
+
+当前用户要求先看客户公开页整体原型，确认后才改正式React。原型docs/prototypes/public-booking-v1/（3文件+6示意图）与正式应用独立，http://127.0.0.1:18188/；?view=studio看摄影师导航。介绍短摘要/全文、明确tab/跨组参考、套餐、默认可读问答、预约意向/必填与选填分层、演示回执；桌面侧栏/无顶部返回，手机保导航。T101完成，T102待用户确认，不可自动实施。
+
+原型checks.json17项绿、12响应状态、0脚本错/API请求/业务写；独审修正aria弹层名/末项删除焦点/退出入口及跨组已选，无新增确定阻塞。证据/静态服务pid/log在/tmp/proofroom-qa/public-booking-prototype，原型服务父53927，只本地，可评审后按授权清理。
+
+固定Node /Users/cjjxw/.workbuddy/binaries/node/versions/22.22.2-6/bin。主父44186→18180/18182，QA44187→18186/18184；停前核命令/cwd，勿并发dev做typegen/build，PG18432/S318190保留。原测试账号不变。私密/tmp/proofroom-qa/product-experience-state.json勿打印/覆盖，不跑会覆盖它的整条T050；测试写只新隔离工作室。未动旧WorkBuddy服务。
+
+下一步：核本次交接记录commit及工作区，给用户提交结果/原型链接，等待设计确认。恢复提示：读取本卡及当前Git状态，只按用户新指令继续，T102未批准。
