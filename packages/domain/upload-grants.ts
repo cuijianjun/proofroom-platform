@@ -1,0 +1,6 @@
+import {fail} from '@proofroom/contracts';
+import {hmac,safeEqual} from './tokens.js';
+const secret=()=>{if(!process.env.APP_SECRET)throw new Error('缺少本地应用密钥');return process.env.APP_SECRET;};
+export type UploadScope={studioId:string;orderId:string;batchId:string;itemId:string;sha256:string};
+export function issueUploadGrant(scope:UploadScope,expires=Date.now()+3600000){const payload=Buffer.from(JSON.stringify({purpose:'private-photo-upload',...scope,expires})).toString('base64url');return `${payload}.${hmac(secret(),payload)}`;}
+export function checkUploadGrant(token:string|undefined,scope:UploadScope){if(!token||token.length>1600)fail(403,'UPLOAD_GRANT_REQUIRED','上传凭据缺失，请重新读取本批次后继续');const parts=token.split('.');const [payload,signature]=parts;if(parts.length!==2||!payload||!signature||!safeEqual(hmac(secret(),payload),signature))fail(403,'UPLOAD_GRANT_INVALID','上传凭据无法确认，请重新读取批次');let data:Record<string,unknown>;try{data=JSON.parse(Buffer.from(payload,'base64url').toString());}catch{fail(403,'UPLOAD_GRANT_INVALID','上传凭据无法确认');}if(data.purpose!=='private-photo-upload'||Object.entries(scope).some(([k,v])=>data[k]!==v))fail(403,'UPLOAD_GRANT_SCOPE','上传凭据与当前文件不符，请重新读取批次');if(typeof data.expires!=='number'||data.expires<=Date.now())fail(403,'UPLOAD_GRANT_EXPIRED','上传凭据已到期，重新读取批次即可继续，不需要重传已成功文件');}

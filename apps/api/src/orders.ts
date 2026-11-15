@@ -1,0 +1,24 @@
+import {availableStudio} from '@proofroom/domain/client-access';
+import type {FastifyInstance} from 'fastify';
+import {uuid,fail,ApiError} from '@proofroom/contracts';
+import {manualProject,confirmInquiry,slotInput,editSlot,reschedule,cooperation,batchProjects} from '@proofroom/contracts/orders';
+import {createManualProject,acceptInquiry,getProject} from '@proofroom/domain/orders';
+import {createSlot,listSlots,updateSlot,rescheduleProject,changeCooperation} from '@proofroom/domain/bookings';
+import {project} from '@proofroom/domain/common';
+import {sampleImage} from '@proofroom/domain/portfolio';
+import {query} from '@proofroom/db';
+import {getObject} from '@proofroom/storage';
+import {ctx,jsonRoute} from './http.js';
+export function registerOrders(app:FastifyInstance){const root='/api/v1/studios/:studioId';
+ jsonRoute(app,'POST',root+'/projects',manualProject,async(req,reply,b)=>createManualProject(await ctx(req,'member',true),b));
+ jsonRoute(app,'POST',root+'/projects/batch',batchProjects,async(req,reply,b)=>{const c=await ctx(req,'member',true);const results=[];for(const item of b.items){try{await changeCooperation(c,item.id,{key:`${b.key}:${item.id}`,version:item.version,active:false,reason:b.reason});results.push({id:item.id,ok:true});}catch(error){if(!(error instanceof ApiError))throw error;results.push({id:item.id,ok:false,error:{code:error.code,message:error.message}});}}return {items:results};});
+ jsonRoute(app,'POST',root+'/inquiries/:id/confirm',confirmInquiry,async(req,reply,b)=>acceptInquiry(await ctx(req,'member',true),(req.params as any).id,b));
+ jsonRoute(app,'GET',root+'/projects/creation/:key',undefined,async req=>{const c=await ctx(req);const key=(req.params as any).key;const [row]=await query('select result from idempotency where scope=$1 and key=$2',[`${c.studioId}:project-create`,key]);return {id:row?.result?.id??null};});
+ jsonRoute(app,'GET',root+'/projects/:id',undefined,async req=>getProject(await ctx(req),(req.params as any).id));
+ jsonRoute(app,'GET',root+'/slots',undefined,async req=>listSlots(await ctx(req)));
+ jsonRoute(app,'POST',root+'/slots',slotInput,async(req,reply,b)=>createSlot(await ctx(req,'admin',true),b));
+ jsonRoute(app,'PATCH',root+'/slots/:id',editSlot,async(req,reply,b)=>updateSlot(await ctx(req,'admin',true),(req.params as any).id,b));
+ jsonRoute(app,'POST',root+'/projects/:id/reschedule',reschedule,async(req,reply,b)=>rescheduleProject(await ctx(req,'member',true),(req.params as any).id,b));
+ jsonRoute(app,'POST',root+'/projects/:id/cooperation',cooperation,async(req,reply,b)=>changeCooperation(await ctx(req,'member',true),(req.params as any).id,b));
+ app.get(root+'/projects/:id/references/:reference',async(req,reply)=>{const c=await ctx(req),p=req.params as any;availableStudio(c.state);uuid.parse(p.id);const order=await project(c,p.id);if(!order.requirement_snapshot.snapshot.references.some((r:any)=>r.id===p.reference))fail(404,'NOT_FOUND','参考图不可访问');if(p.reference.startsWith('sample-'))return reply.type('image/webp').send(await sampleImage(p.reference));uuid.parse(p.reference);const [item]=await query("select object_key from portfolio_items where studio_id=$1 and id=$2 and state='ready'",[c.studioId,p.reference]);if(!item)fail(404,'NOT_FOUND','历史参考图暂不可用');return reply.type('image/webp').send((await getObject(item.object_key)).bytes);});
+}

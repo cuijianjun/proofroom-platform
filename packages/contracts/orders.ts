@@ -1,0 +1,22 @@
+import {z,key,uuid,pin,version,type Stage} from './index';
+import {galleryCopy} from './galleries';
+import type {Inquiry} from './presales';
+const appointment={slotId:uuid.nullable(),slotVersion:version.nullable()};
+const agreement={packageSource:z.enum(['custom','current','inquiry']),packageId:z.string().min(1).max(80).nullable(),contentVersion:version,quota:z.number().int().min(1).max(300),price:z.string().max(200),special:z.string().max(2000),dateFlexible:z.boolean(),intendedDate:z.string().max(200),...appointment};
+export const manualProject=z.strictObject({key,name:z.string().trim().min(1).max(60),wechat:z.string().trim().min(1).max(120),phoneLast4:z.string().regex(/^(\d{4})?$/,'如填写请用明确告知的电话后四位，不是项目访问码'),pin,title:z.string().trim().min(1).max(120),galleryCopy:galleryCopy.optional(),...agreement});
+export const confirmInquiry=z.strictObject({key,version,title:z.string().trim().min(1).max(120),...agreement});
+export const slotInput=z.strictObject({startAt:z.iso.datetime({offset:true}),endAt:z.iso.datetime({offset:true})}).refine(v=>Date.parse(v.endAt)>Date.parse(v.startAt),{message:'结束时间必须晚于开始时间',path:['endAt']});
+export const editSlot=z.strictObject({version,startAt:z.iso.datetime({offset:true}),endAt:z.iso.datetime({offset:true}),enabled:z.boolean()}).refine(v=>Date.parse(v.endAt)>Date.parse(v.startAt),{message:'结束时间必须晚于开始时间',path:['endAt']});
+export const reschedule=z.strictObject({key,version,currentSlotVersion:version.nullable(),...appointment});
+export const cooperation=z.strictObject({key,version,active:z.boolean(),reason:z.string().trim().min(1).max(500)});
+export type ProjectAgreement=z.infer<typeof confirmInquiry>;
+export type ManualProject=z.infer<typeof manualProject>;
+export type Slot={id:string;startAt:string;endAt:string;version:number;enabled:boolean;projectId:string|null;projectTitle:string|null};
+export type Project={id:string;title:string;name:string;wechat:string;phoneLast4:string|null;workflowStage:Stage;lifecycleStatus:'active'|'cancelled';version:number;createdAt:string;updatedAt:string;attention:string|null;booking:Slot|null;lastBooking:Slot|null;agreement:{package:import('./config').Content['packages'][number]|null;quota:number;price:string;special:string;dateFlexible:boolean;intendedDate:string};requirement:Inquiry;clientLink:string;selectionVersion:number;completedSelectionVersion:number|null;completedAt:string|null;deliveredAt:string|null;expiresAt:string|null;manifestVersion:number;galleries:{id:string;title:string;kind:'original'|'retouched';version:number}[]};
+export type ProjectSummary={id:string;title:string;name:string;wechat:string;phoneLast4:string|null;workflowStage:Stage;lifecycleStatus:'active'|'cancelled';version:number;createdAt:string;updatedAt:string;attention:string|null;booking:Slot|null;originalCount:number;originalReady:number;retouchedCount:number;selectedCount:number;failedCount:number;completionChanged:boolean;quota:number;expiresAt:string|null;nextAction:string};
+export type Dashboard={projectCounts:Record<ProjectQuery['filter'],number>;inquiryCounts:Record<Inquiry['status'],number>;counts:Record<'P1'|'P2'|'P3'|'P4',number>;pendingInquiries:number;needsAction:number;today:({projectId:string;title:string;name:string;startAt:string;endAt:string})[]};
+export const projectQuery=z.strictObject({filter:z.enum(['all','needsAction','P1','P2','P3','P4','archived','cancelled']).default('all'),q:z.string().max(100).default(''),sort:z.enum(['newest','oldest','booking']).default('newest'),cursor:z.string().max(512).optional()});
+export type ProjectQuery=z.infer<typeof projectQuery>;
+export const visibilityInput=z.strictObject({version});
+
+export const batchProjects=z.strictObject({key,action:z.literal('cancel'),reason:z.string().trim().min(1).max(500),items:z.array(z.strictObject({id:uuid,version})).min(1).max(50)}).refine(v=>new Set(v.items.map(i=>i.id)).size===v.items.length,{message:'项目不能重复选择'});

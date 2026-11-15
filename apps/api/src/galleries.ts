@@ -1,0 +1,5 @@
+import type {FastifyInstance} from 'fastify';
+import {galleryQuery,galleryPhotoQuery,editGallery,galleryPhotoBatch} from '@proofroom/contracts/galleries';
+import {getGallery,listGalleries,galleryPhotos,updateGallery,updateGalleryPhotos} from '@proofroom/domain/galleries';
+import {ctx,jsonRoute} from './http.js';
+export function registerGalleries(app:FastifyInstance){const root='/api/v1/studios/:studioId/galleries';jsonRoute(app,'GET',root,undefined,async req=>listGalleries(await ctx(req),galleryQuery.parse(req.query)));jsonRoute(app,'GET',root+'/:id',undefined,async req=>getGallery(await ctx(req),(req.params as any).id));jsonRoute(app,'POST',root+'/:id',editGallery,async(req,reply,b)=>{const c=await ctx(req,'member',true),id=(req.params as any).id;await updateGallery(c,id,b);return getGallery(await ctx(req),id);});jsonRoute(app,'GET',root+'/:id/photos',undefined,async req=>galleryPhotos(await ctx(req),(req.params as any).id,galleryPhotoQuery.parse(req.query)));jsonRoute(app,'POST',root+'/:id/photos/batch',galleryPhotoBatch,async(req,reply,b)=>updateGalleryPhotos(await ctx(req,'member',true),(req.params as any).id,b));}

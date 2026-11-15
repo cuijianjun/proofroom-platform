@@ -1,46 +1,49 @@
-# saas/
+# ProofRoom 摄影选片平台
 
-The multi-tenant photographer platform: studio websites from templates, client galleries with proofing, CRM, payments into each studio's own Stripe account, email from each studio's own domain, and a two-way Lightroom Classic plugin. A Free plan for solo photographers and Pro at $18 per seat a month with everything included.
+独立的 React/Next Web、Fastify JSON API、持久 Worker，使用普通 PostgreSQL。中文摄影师工作台覆盖工作室/成员/账号、公开作品与问卷、咨询接单、项目预约、原片上传、客户选片、精修对应、源文件交付、图库管理及加密备份。浏览使用压缩图，下载保留上传源字节；阶段按业务动作自动推进。
 
-The product name is not decided. `NEXT_PUBLIC_APP_NAME` is a placeholder and one rename pass (plan item 1.30) replaces it everywhere.
+## 本地预览
 
-## Run locally
+- 摄影师入口：http://127.0.0.1:18180/studio
+- 注册工作室：http://127.0.0.1:18180/studio/register
+- API 健康：http://127.0.0.1:18182/api/v1/health
 
-```bash
-cp .env.example .env.local     # fill in what you have; the app degrades gracefully
-npm install
-npm run dev                    # prints which env vars are missing, then starts Next
+此平台与旧 WorkBuddy 项目账号、数据和端口独立。首次使用请注册工作室；客户通过摄影师发送的项目链接和 PIN 进入。公开咨询前先填写联系微信。本地邀请通过复制链接完成，不发送邮件。
+
+## 启动与停止
+
+在本目录执行，固定 Node 22.22.2：
+
+```sh
+export PATH="/Users/cjjxw/.workbuddy/binaries/node/versions/22.22.2-6/bin:$PATH"
+npm ci
+npm run local:setup
+npm run db:migrate
+npm run dev
 ```
 
-Open http://localhost:3000. Tenant sites are reachable at `/t/{slug}/...` on localhost (in production they live at `{slug}.APP_DOMAIN` and on custom domains).
+PostgreSQL 18432、S3 兼容替身 18190 使用项目私有 `.local`；Web 18180/API 18182/Worker 共用开发库。`.env` 不提交、不提供给 Web，不能打印或外传。前台启动可 Ctrl+C 结束本次 Web/API/Worker，数据库和媒体保留。
 
-## Checks
+本次预览由独立父进程保持运行，进程号在 `.local/dev.pid`，日志在 `.local/logs/dev-preview.log`。停止前先核对该 PID 命令确为本项目 `scripts/local.mjs start`，再向其发送 SIGTERM；只结束它拥有的三个子服务。停止后日志和 PID 文件可清理，数据库与媒体应保留。不要使用全局 kill 或重启其他项目。
 
-```bash
-npx next typegen && npm run typecheck
-npm run lint
-npm test
-npm run build                  # applies db/schema.sql when DATABASE_URL is set, then builds
-```
+## 验证与验收边界
 
-CI runs the same four commands with no secrets on every push touching `saas/` (`.github/workflows/saas.yml`).
+最新M14统一提示、上传/批次、精修对应与下载等子模块的20px基础留白，既有更大间距保持。四宽几何回归、29页四宽只读复查及相关上传/交付/下载增量通过，Web构建/11客户端包扫描通过；只改布局，原功能和数据保留。详见验收M14，原mock预览和账号不变。
 
-## Scripts
+上批M13完善预约稳定性和「我的」：安全GET瞬断有界恢复/上线重读，超时与取消分类，三个时段入口区分未知/空；摄影师站内日历、独立起止时间/精确分钟/跨日，客户仍仅提交意向、摄影师确认才占档。我的页按身份/完善提示/分组列表展示，保留全部原功能，长名可展开，时段保存按钮常驻。原截图那次NETWORK具体原因尚未复现，恢复改进不等于已证明其根因消除。最终增量、类型/Web构建、11包扫描及独审通过，详见验收M13；[原mock预览](http://127.0.0.1:18186/studio)保持，原账号和业务摘要不变。
 
-| Command | What it does |
-| --- | --- |
-| `npm run env:check` | Lists required env vars and which are missing. Never prints values. |
-| `npm run db:migrate` | Applies `db/schema.sql` (idempotent) to `DATABASE_URL`. |
-| `npm run stripe:setup` | Creates the one price, the referral coupon and the two webhook endpoints in Stripe. |
-| `npm run platform:admin you@example.com` | Makes an existing user a platform admin. |
-| `npm run plugin:zip` | Builds the Lightroom plugin zip with the site URL stamped in. |
+上批M12为常驻单页工作台：保持React/TS/Next，侧栏/头部/底栏与会话跨正常路由保留，仅切业务区域。前进后退、刷新直达、锚点、草稿取消/恢复、账号及工作室隔离已验证。单次73浏览器集成后，最后9导航增量、平台8、类型/Web构建及11份客户端包扫描通过，详见验收M12。原体验账号及7项目/3咨询/16照片/5档期摘要未变，mock预览仍为 http://127.0.0.1:18186/studio 。
 
-## Where things are
+上批M11完成一键复制、项目顶部阶段微信文案、日期/时段预约卡片和两端暖白棕色界面。已约时间灰显，每30秒及回到页面时更新；摄影师可设置时段，确认接单才占用，取消释放。复杂标记/低频管理收纳，客户完成操作固定底部，原功能保留。65个浏览器case都有带来源的通过证据（59集成后具体增量），21项平台增量、最终类型/构建及11份客户端包扫描通过；预约抢占/断网/刷新/恢复和长标题遮挡均已补测，详见验收M11。
 
-- `docs/BUILD-PLAN.md`: the full plan, about 1,000 pieces, with what is done. Appendix A is the Stripe Connect registration walkthrough.
-- `docs/SETUP.md`: production setup runbook (Vercel, Neon, Blob, Stripe, Resend, DNS).
-- `docs/ARCHITECTURE.md`: how tenancy, auth, storage, payments, email and the plugin fit together.
-- `docs/NAME-CANDIDATES.md`: domain availability list for the naming decision.
-- `db/schema.sql`: the whole schema, idempotent.
-- `src/lib`: server libraries. `src/app`: routes. `src/components`: UI.
-- `src/proxy.ts`: host classification and tenant rewrites.
+上批M10已完成六项截图修正：29处同类选择菜单改站内控件并显示当前值，本地状态增加图标/指示灯，工作台去除重复项目列表，原始需求的参考题和图片合并置底，客户微信点击即复制并有失败手动入口。单次57个浏览器用例通过；最后手机布局修复后另跑3项增量，包含四宽实际点选，类型、Web新构建及11份客户端包扫描通过。原mock账号与数据保留，任务T053–056关闭；详见验收M10。
+
+上批M9已按产品旅程分批验证54个浏览器用例，新增mock工作室含7项目、3咨询、16照片、14图库、三类团队角色、备注/预约/ZIP和备份。55个有数据场景覆盖四宽，顾客品牌另加768/1024。修复合法长文件名上传失败、长内容撑屏及顾客品牌手机隐藏/平板溢出；15项平台增量、类型、三端构建、实际客户端包扫描通过。分批证据和保留边界详见验收记录，未称一次54项整轮全绿。
+
+隔离mock工作台：<http://127.0.0.1:18186/studio>；登录信息仅在本机私有`/tmp/proofroom-qa/product-experience-state.json`。该库与18180主开发库独立。mock预览由`.local/mock-preview.pid`记录父进程，日志`.local/logs/product-mock-preview.log`；停止前核对命令为本项目`scripts/e2e-local.mjs`及cwd，SIGTERM只停该父进程拥有的Web/API/Worker，测试数据保留。
+
+此前完整平台 129 项、完整浏览器 51 项通过，测试目录修复另以架构 4 项增量验证。本轮受影响平台 51 项通过，浏览器共享回归 51 项通过，新增拖放用例修正选择器后单独通过；类型检查、三端构建和客户端秘密扫描通过。lint 从 102 条降到 32 条（0 错误），保留的 24 条状态同步和 8 条图片提示已逐项核对。生产依赖审计为 0；本地 S3 替身仍有 4 条开发依赖告警，已阻断不用的浏览器表单解析入口，未宣称依赖漏洞全部修复。
+
+本机原生上传已补齐：用户亲自原生多选上传 10 张，Agent 核对就绪、自动进入选片及下载与上传清单 SHA256；Agent 真实从 Finder 拖入 4 张样图，核对可信原生事件、上传及逐张下载与本地源 SHA256，取消系统文件窗口也未新增批次。自动注入用例另行记录。未声称微信真机、云 S3、生产部署或大批真实相机照片通过；129 张容量样图是每张 298 字节的合成 JPEG。测试只用隔离库和对象，不向开发业务项目注入测试照片。
+
+测试命令、备份恢复及回退见 [quickstart](specs/001-proofroom-platform/quickstart.md)，逐项 AT 证据见 [acceptance](specs/001-proofroom-platform/acceptance.md)，任务见 [tasks](specs/001-proofroom-platform/tasks.md)。原始来源及迁移裁决保存在 `upstream/` 与 spec-kit 文档中。当前仅本地开发，未提交新改动、未推送、未部署。

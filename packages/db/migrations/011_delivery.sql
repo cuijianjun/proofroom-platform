@@ -1,0 +1,11 @@
+alter table orders add column stage_correction_hold boolean not null default false;
+alter table delivery_mappings add column source text not null default 'manual' check(source in('manual','auto'));
+alter table delivery_mappings add column updated_at timestamptz not null default now();
+alter table zip_jobs add column version integer not null default 1;
+alter table zip_jobs add column manifest jsonb not null default '[]';
+alter table zip_jobs add column lease_token uuid;
+alter table zip_jobs add column attempts integer not null default 0;
+alter table zip_jobs add column size_bytes bigint not null default 0;
+alter table zip_jobs add column updated_at timestamptz not null default now();
+create index delivery_project on delivery_mappings(studio_id,order_id,selection_version);
+create index zip_pending on zip_jobs(state,updated_at);

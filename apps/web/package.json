@@ -1,0 +1,22 @@
+{
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "name": "@proofroom/web",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 18180",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 18180",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.4.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "@proofroom/contracts": "*"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  }
+}

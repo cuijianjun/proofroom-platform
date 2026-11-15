@@ -1,0 +1,11 @@
+# ProofRoom active
+目标新平台全本地实现/全验后预览；Web/API/Worker+普通PG。根 /Users/cjjxw/codex/摄影选片平台/proofroom，Git eff48d0→agent/proofroom-local-main，原码upstream保留，无commit/push/部署；旧WorkBuddy不动。
+正本../需求规格与实施方案.md v1.1§19（16UX/39AT，图库补19.3.3），spec/tasks/acceptance在specs/001-proofroom-platform。
+已完成T001-028/030-041；T010等导出，T029原生窗未验。M6 backend35+UI整单异常5/相邻3绿；M7图库backend54绿，UI管理2+copy/scope2绿；真实RED→修复：旧清理误删retained源、Owner隐藏原片前进、copy表单串普通new。图库邻近订单/列表/整单3绿m7-gallery-nearby-browser.log；type/3build/独审已关。证据acceptance。
+T040已收口：平台API6+security-races7=13绿、UI控制/Help四宽度1+跨tab身份1绿、旧MFA/平台2绿，type/3build/独审均关。取消原因与跨actor pending均真RED→修→GREEN，证据acceptance/m7-controls*.log/m7-platform-actor*.log。
+T041/T010收口：backup+restore/API/Worker/OwnerHelp/CLI/local restore/migration.md已实现。source包AES-GCM+refs，newDB/namespace/newkey保notes/capPIN/deadline，其他member新临时密码强改；full含global audit另入口。独审P1/P2全关：query改host拒绝、lostPUT当前对象exactAbort/Delete+SIGKILL私有state；anon身份碰撞去重、fullauditnull合法、元数据128MiB单边界；futurekey统一common.mediaKey+MEDIA_NAMESPACE；runtime API_ORIGIN与local restore分离Web。read独立child scratch不删调用者文件。
+最终nearby六文件64绿，portfolio当轮fixture引号收集失败后单独6绿(m7-backup-portfolio-final)；同代码覆盖70非整轮全绿。backup9再次localhost恢复实际Web/API/Worker+Chrome副本独有文字绿19.93s(m7-backup-localhost-final)，source无该文字；backupUI2绿18.8s；types/final2 build/boundary绿。acceptance详细真实RED/界限。T041新增processing阻快照/readonly实际创建2定向测试运行m7-backup-policy-final.log，结果待读。
+当前T042：新增tests/e2e/errors.spec.ts三场景初跑m8-errors-first.log，预期首条会真实暴露普通保存success在新编辑后残留(useAction.setError(null)不清message)；不要在browser运行时改Web，等结果再修。另外HTTP401-5xx/截断/离线/真实20s超时保输入/实际重试仅1version；四宽弹层焦点/Escape；synthetic pull失败保rows均待结果。完成T042后T043逐页UI/CU/AT覆盖→T044重启/异常/有界容量→T045依赖安全/lint/构建→046-048全验后preview。
+迁移001-015已test应用不可改，只新增016+。Node /Users/cjjxw/.workbuddy/binaries/node/versions/22.22.2-6/bin；PG17:18432dev/test、S3:18190本地替身运行，无其他常驻预期。QA18186/18184/.next-qa；build.next勿竞争；.env不打印，Web剥离私密env。QA/tmp/proofroom-qa可清。
+T029原生：Chrome目标变化拒绝、Safari无窗口/provider不可用；自有空Chrome未选图、不动其他项目；CUA已completion_summary，native-state.json/样图在QA勿打印。不能setFiles冒充系统窗。T045 Next/Sharp/Zod/Vitest漏洞待兼容更新；不audit--force/盲降级。
+未知401403保key/payload；明确业务409结束冻结保输入重核对；草稿无PIN/cap/grant/session。单一原文/双方星色；源下载全部原片精修真实bytes。独审foundation_review可只读委派，不并行写。T040已验证收口，不提前交预览。

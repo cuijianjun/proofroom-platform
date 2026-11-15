@@ -1,0 +1,12 @@
+# ProofRoom active
+目标全本地新平台/全验后预览；普通PG+Web/API/Worker，正本../需求规格与实施方案.md v1.1§19(16UX/39AT)，spec-kit specs/001-proofroom-platform。根/Users/cjjxw/codex/摄影选片平台/proofroom，eff48d0→agent/proofroom-local-main，无commit/push/部署；旧WorkBuddy/18080等不动。
+T001-028/030-042/044完成；029原生阻塞，043自动矩阵过但native未验，045进行，046-048待。历史acceptance和本目录archive，不重读全史。
+T043 m8-full-flow-seventh1绿26.9s，42项场景×四宽+实际咨询/客户P1-P4/原文/sourceSHA/expiry/cancel；独有route heading+URL，全nav/button/link/form44px，排隐藏honeypot。真实修project title22px/a.link18px高和login28px宽、cancelled误写暂停→取消；unknownroute有真实恢复入口。尚未算原生T029。
+T044 m8-recovery-final2绿22.39s：API三次SIGKILL/64已收65待收回执、真实S3不可达→恢复、2×129配额竞争一成功，129张298byte合成JPEG真实处理100+29页/ZIP CRC+SHA，结束RSS约153/151MB非峰值或相机大批；Worker SIGKILL四claim失败/显式retry。T041实际新库/新key/新媒体根(包含未来写入)/MFA/capPIN/notes/deadline/CLI/副本Web已验且独审关。
+当前045：已升next/eslint16.4.6 sharp.35.5 zod4.6.7 vitest4.1.12，overrides vite7.3.8/source-map-js1.2.2/brace1.1.22+5.0.13/minimatch仅estree11.0.8/sharp/zod统一；删fflate。root dev Next解决parser，业务全复用contracts.z解决两版Zod结构比较导致4GB OOM；完整m8-upgrade-types-final已绿，m8-upgrade-build绿。security-final-production0；all剩4个(1moderate/3high)仅S3rver本地替身busboy/dicer/XML链，无兼容发布，不能audit-force/降级或声称已修。
+lint最终0error102warn，Compiler建议79+deps15+img8；明确reactCompiler:false，建议保warn、基础Hooks规则error。独审未见运行阻塞(稳定reload/reset、仅open初始化保草稿、ref最新清理)、img保逐请求鉴权压缩预览。guard最终必须明确static产物+完整参考env+files>0；source-only单独标注；m8-guard-final3绿/m8-architecture-final绿，匹配只报文件不泄值，扫描仅选定参考配置。
+完整平台m8-platform-integrated-first.log已17文件129用例绿88.21s。完整browser首轮50绿/1失败4.9m：unknown completion只等pending按钮visible便读DB，1200ms延迟真RED completedAt null；加toBeEnabled保持delay/非空时间戳/3同key/403冻结断言后m8-complete-latency-green待读。取消合作backend提示+正本AT20统一取消，别把工作室暂停混用。需刷新最终build/影响平台并再完整browser。勿另开QA Worker竞争。两套测试只testDB/bucket。045收口→046 AT39/quickstart→047独审→048本地服务/预览。全部检查前不宣称全过。
+029两轮原生：专属GoogleChromeTesting正确项目AX但click状态变/连续超时；IAB可进项目但宿主com.openai.codex控制被工具安全拒绝。files0，未setFiles/未上传；自建context/QA已关，IAB临时tab。CUA已completion_summary；重用先rewriteDocumentation/新handles。不盲附连接、不关其他项目、不反复代测。native-state-v2/profile在/tmp/proofroom-qa可清。
+Node固定/Users/cjjxw/.workbuddy/binaries/node/versions/22.22.2-6/bin；ownPG17:18432dev/test，S3:18190运行；无Web/API/Worker常驻。QA18186/18184/.next-qa，restore18188/18189/.next-restore，build.next勿竞争。迁移001-015已test应用不可改，env/私客链接不打印、Web剥私密env。unknown401403保key/payload，业务409核对保输入。foundation_review只读可委派；不并行写。
+
+最后Native Raise尝试：专属Testing profile重开/0 filechooser listeners，AX URL确为自有QA项目；已观察到的Window Raise触发ScreenCaptureKit -3812无效参数，未点文件、files0、只关自有context，CUA已completion_summary。原生仍工具阻塞，不再无依据重连。

@@ -1,0 +1,10 @@
+# ProofRoom active · 2026-11-14
+目标新平台全部本地实现/全验后预览，Web/API/Worker+普通PG。正本../需求规格与实施方案.md v1.1§19（16UX/39AT），spec/tasks/acceptance在specs/001-proofroom-platform。
+根 /Users/cjjxw/codex/摄影选片平台/proofroom，Git eff48d0→agent/proofroom-local-main；原码upstream保留、未commit/push/部署，旧WorkBuddy不动。
+完成T001-009/011-028/030-038。T010等导出；T029原生窗口仍未验，M7/M8未完。M6当前backend storage6+delivery28+真Worker恢复1=35绿(m6-backend-integrated)，三服务build/type/边界绿；M6UI完整单及异常5场景各增量绿，选片相邻3绿(m6-selection-regression)。独审M6所有报告项已关。详细证据acceptance和/tmp/proofroom-qa/m6-*.log。
+当前M7 T039后端已写，UI待写：contracts/domain/api galleries，copyGallery白名单同Tx创建新P1，分类/照片批量CAS/列表归档，客户隐藏网关/原片visibilityReady/交付隐藏阻断；普通照片软移除保源计额度。013已test应用不可改（001-013）。对应正本19.3.3：P1/P2未选原片、P3/P4未对应未交付retouch ready可remove/restore；selected/mapped/delivered保护；空批cancelled、无原片P1；retained_deleted区别旧失败上传清理。
+M7后端54条（galleries9+media9+selections8+delivery28）绿m7-gallery-backend-regression.log。复核已报P1：旧uploads清理误删retained source，先m7-retained-red实际NoSuchKey；修scan候选+持storage锁内guard，m7-retained-green含真扫描/直接cleanup+restore并发、源SHA/额度保留。另一P2 Owner P2/P3前进漏visibilityReady，m7-hidden-stage-red复现200，已加守卫并在54绿中验证。013保持不可改。
+前端T039已写galleries.tsx列表/URL筛选管理/分类/批量/隐藏软移除恢复/设置草稿CAS/同项目分享；application已接线。project-form optional cloneGallery参数，新身份空白、copy白名单选项、原两步确认，成功进新P1图库。list-window仅refresh变useCallback，便于revision刷新；URL+key保窗口。m7-gallery-ui-types-second绿。图库browser第二轮2绿，copy配置流程首轮绿；独审scope残留P2已真RED再scope key修，m7-copy-scope-green两条绿，类型/三build绿。Owner回退P2后hidden→P3补测绿。独审所有报告项关闭。相关订单/交付3场景m7-gallery-nearby-browser.log待读；接着T040-044/M8自动继续。T039已勾。
+Node /Users/cjjxw/.workbuddy/binaries/node/versions/22.22.2-6/bin。PG17:18432dev/test，S3:18190仅本地替身运行；QA18186/18184/.next-qa，build.next勿竞争。无Web/API/Worker常驻预期。.env不打印，Web剥离DB/S3/APP_SECRET；QA/tmp/proofroom-qa可清。S3前置真实V4/HMAC/时间窗与hex body流式临时校验，UNSIGNED-PAYLOAD SDK流显式策略；脚本原S3rver扩展List/Abort已独审关闭。非云/5GB/真实照片验收。
+T029：Chrome app目标变化拒绝、Safari无窗口超时、provider不可用；只建自有空Chrome，没选图没碰其他项目；CUA已completion_summary。native-state.json/4样图在QA不打印；禁止setFiles冒充系统窗。最终前另补。
+T045已审计Next/Sharp/Zod/Vitest等漏洞待兼容更新，auditJSON临时QA；不audit--force/盲降级。未知401403保原key，明确业务409终结后保输入重核对；草稿不含PIN/cap/grant/session。单一备注原文/双方星色来源；源下载全部原片精修字节，集合未知不假零。

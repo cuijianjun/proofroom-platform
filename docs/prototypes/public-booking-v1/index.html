@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>拾光摄影 · 客户公开页设计原型</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-screen="public">
+  <svg class="symbols" aria-hidden="true"><defs>
+    <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V3H3v13h5"/></symbol>
+    <symbol id="time" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 3-3 6 6"/></symbol>
+    <symbol id="expand" viewBox="0 0 24 24"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></symbol>
+    <symbol id="home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7M5 9v12h14V9M10 21v-7h4v7"/></symbol>
+    <symbol id="grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="chat" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H9l-5 3v-5a4 4 0 0 1-2-3V7a4 4 0 0 1 4-4h11a4 4 0 0 1 4 4Z"/><path d="M7 8h9M7 12h6"/></symbol>
+    <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 22v-3a8 8 0 0 1 16 0v3"/></symbol>
+    <symbol id="leaf" viewBox="0 0 24 24"><path d="M19 3C8 3 3 8 5 15s14 6 14-12ZM5 20l10-12"/></symbol>
+  </defs></svg>
+  <a href="#main" class="skip">跳到主要内容</a>
+  <div class="prototype-bar" aria-label="原型评审工具">
+    <span class="prototype-label"><i></i> 原型 v1 <small>示例内容 · 不连接业务数据</small></span>
+    <nav aria-label="原型页面"><button data-screen="public" aria-current="page">客户页</button><button data-screen="studio">摄影师端</button><button id="open-notes">方案说明 ↗</button></nav>
+  </div>
+
+  <div id="public-view">
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="brand" href="#main"><span class="brand-mark">拾</span><span><strong data-brand>拾光摄影</strong><small>SHIGUANG STUDIO</small></span></a>
+        <nav class="desktop-page-nav" aria-label="页面内容"><a href="#portfolio">看作品</a><a href="#packages">拍摄套餐</a><a href="#faq">常见问题</a></nav>
+        <button class="button outline contact-copy" data-copy="shiguang_photo"><svg><use href="#copy"/></svg><span>复制摄影师微信</span></button>
+      </div>
+    </header>
+    <nav class="phone-page-nav" aria-label="页面内容"><a href="#portfolio">作品</a><a href="#packages">套餐</a><a href="#faq">问答</a><a href="#inquiry">咨询拍摄</a></nav>
+    <main id="main" tabindex="-1">
+      <section class="hero page-width" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span> 自然光影像 · 把你拍得像你</p>
+          <h1 id="hero-title">自在一点，<br>就很<span>上镜。</span></h1>
+          <p id="intro-preview" class="intro-preview">个人写真、情侣与家庭记录。<br>不必擅长摆姿势，一起留下自然的片刻。</p>
+          <button class="text-button" id="about-button">了解摄影师 <svg><use href="#plus"/></svg></button>
+          <a class="button primary hero-cta" href="#portfolio">先看看作品 <svg><use href="#arrow"/></svg></a>
+          <p class="hero-footnote">喜欢什么感觉，就选几张告诉我。也可以直接咨询。</p>
+        </div>
+        <figure class="hero-image"><img src="portrait.jpg" alt="自然光人像示意作品"><figcaption><span>日常也值得被记住</span><span>STORIES IN LIGHT / 01</span></figcaption></figure>
+      </section>
+
+      <div class="page-width content-layout">
+        <div class="content-column">
+          <section id="portfolio" class="content-section" aria-labelledby="portfolio-title">
+            <div class="section-title"><div><p class="eyebrow">01 / FIND YOUR FEELING</p><h2 id="portfolio-title">喜欢什么样的自己？</h2></div><button class="button outline small" id="selected-filter" aria-pressed="false">已选参考 <span class="selected-number">0</span></button></div>
+            <p class="section-intro">点图片看大图，点「选作参考」告诉摄影师你喜欢的感觉。选填，最多 15 张。</p>
+            <div class="category-area"><div class="category-tabs" role="tablist" aria-label="作品分类"></div><button class="category-more icon-button" id="all-groups" aria-label="查看完整作品分类"><svg><use href="#chevron"/></svg></button></div>
+            <p class="category-hint">可左右滑动切换分类 <span>→</span></p>
+            <div id="photo-panel" role="tabpanel" aria-label="全部作品" tabindex="0"><div class="photo-grid" id="photo-grid"></div><div id="empty-photos" class="empty-state" hidden><svg><use href="#image"/></svg><h3>这里暂时没有作品</h3><p>可以看看其他分类，或先说说你的拍摄想法。</p><button class="button outline" id="reset-category">查看全部作品</button></div></div>
+            <button class="button outline load-more" id="load-more">再看一些作品 <svg><use href="#plus"/></svg></button>
+          </section>
+
+          <section id="packages" class="content-section" aria-labelledby="packages-title">
+            <div class="section-title"><div><p class="eyebrow">02 / A PLAN THAT FITS</p><h2 id="packages-title">找到适合的拍摄方式</h2></div><span class="subtle">也可以稍后再决定</span></div>
+            <div class="package-grid">
+              <article class="package-card" data-package="portrait"><p class="package-kind">一个人的小小记录</p><h3 data-package-name="portrait">个人写真</h3><p class="price"><small>¥</small>1,280 <span>示例价格</span></p><ul><li><svg><use href="#check"/></svg>2 张精修，具体拍摄安排单独确认</li><li><svg><use href="#check"/></svg>适合个人写真、日常留念</li></ul><details><summary>查看套餐说明 <svg><use href="#plus"/></svg></summary><p>拍摄前沟通风格与场景，照片进入专属选片页后挑选精修。服装、地点、交付时间及其他服务，以你与摄影师最终确认的约定为准。</p></details><button class="button outline package-select" data-select-package="portrait" aria-pressed="false">选为意向套餐</button></article>
+              <article class="package-card" data-package="family"><p class="package-kind">在一起，就是好照片</p><h3 data-package-name="family">家庭纪实</h3><p class="price"><small>¥</small>2,680 <span>示例价格</span></p><ul><li><svg><use href="#check"/></svg>6 张精修，具体拍摄安排单独确认</li><li><svg><use href="#check"/></svg>适合家庭合照、亲子日常</li></ul><details><summary>查看套餐说明 <svg><use href="#plus"/></svg></summary><p>记录家人之间自然的互动。拍摄人数、场景、妆造及费用包含项目，请在咨询中与摄影师确认。</p></details><button class="button outline package-select" data-select-package="family" aria-pressed="false">选为意向套餐</button></article>
+            </div>
+            <button id="clear-package" class="text-button" hidden>清除套餐选择，沟通后再定</button>
+          </section>
+
+          <section id="faq" class="content-section" aria-labelledby="faq-title">
+            <div class="section-title"><div><p class="eyebrow">03 / BEFORE WE MEET</p><h2 id="faq-title">你可能想问</h2></div><span class="subtle">拍摄前的小约定</span></div>
+            <div class="faq-list">
+              <article class="faq-item"><span class="question-mark" aria-hidden="true">Q</span><div><h3 data-faq-question="0">原片、精修和交付有什么区别？</h3><div class="faq-answer" data-faq-answer="0"><p>浏览和选片使用压缩预览。最终交付下载的是摄影师上传的原片及精修源文件，不是网页缩略图。</p><p>精修张数按双方确认的套餐与约定，具体交付时间由摄影师与你沟通。</p></div><button class="text-button faq-expand" data-faq-expand="0" aria-expanded="false" hidden>展开完整问答 <svg><use href="#plus"/></svg></button></div></article>
+              <article class="faq-item"><span class="question-mark" aria-hidden="true">Q</span><div><h3>可以改期吗？</h3><div class="faq-answer"><p>可以先与摄影师沟通新的可用时段，确认后再改期。取消预约只释放时段，不会取消拍摄合作或删除照片。</p></div></div></article>
+              <article class="faq-item"><span class="question-mark" aria-hidden="true">Q</span><div><h3>提交咨询后，时间就定下来了吗？</h3><div class="faq-answer"><p>还没有。你选的是意向时段，摄影师确认接单后才会占用档期。是否接单、拍摄安排和费用，都会再与你确认。</p></div></div></article>
+            </div>
+          </section>
+
+          <section id="inquiry" class="content-section inquiry-section" aria-labelledby="inquiry-title">
+            <div class="section-title"><div><p class="eyebrow">04 / LET’S MAKE A MEMORY</p><h2 id="inquiry-title">说说这次拍摄</h2></div></div>
+            <p class="section-intro">不必一次想清楚。先留下简单想法，摄影师会通过微信与你沟通。</p>
+            <form id="inquiry-form" novalidate>
+              <div class="form-part"><div class="part-title"><span>1</span><h3>你的拍摄想法</h3></div>
+                <fieldset class="field"><legend>想拍什么类型的照片？ <span class="required">必填</span></legend><div class="choice-chips" id="shoot-types"></div><p class="field-error" id="type-error"></p></fieldset>
+                <div class="plan-inline"><div><span class="field-label">意向套餐</span><strong class="package-label">暂不决定，沟通后再定</strong></div><a href="#packages" class="text-button">选择 / 修改 <svg><use href="#chevron"/></svg></a></div>
+                <div class="field"><span class="field-label" id="slot-label">意向拍摄时间 <span class="optional">选填</span></span><button type="button" class="slot-trigger" id="choose-slot" aria-haspopup="dialog" aria-labelledby="slot-label slot-label-value"><svg><use href="#time"/></svg><span id="slot-label-value">选择日期与时段，或稍后沟通</span><svg><use href="#chevron"/></svg></button><p class="hint">这是预约意向，摄影师确认后才会保留档期。</p></div>
+                <div class="reference-inline"><svg><use href="#image"/></svg><div><strong>已选 <span class="selected-number">0</span> 张参考作品</strong><p>选填，用来说明喜欢的感觉。</p></div><a class="text-button" href="#portfolio">挑选 / 回改</a></div>
+              </div>
+              <div class="form-part"><div class="part-title"><span>2</span><h3>方便怎么联系你？</h3></div><div class="field-pair"><div class="field"><label for="customer-name">怎么称呼你？ <span class="required">必填</span></label><input id="customer-name" name="customerName" autocomplete="nickname" placeholder="你的称呼" maxlength="60" aria-describedby="name-error"><p id="name-error" class="field-error"></p></div><div class="field"><label for="customer-wechat">微信号 <span class="required">必填</span></label><input id="customer-wechat" name="wechat" autocomplete="off" placeholder="便于摄影师联系你" maxlength="120" aria-describedby="wechat-error"><p id="wechat-error" class="field-error"></p></div></div><div class="field pin-field"><label for="access-code">设置 4 位项目访问码 <span class="required">必填</span></label><input id="access-code" name="accessCode" type="password" autocomplete="off" inputmode="numeric" maxlength="4" placeholder="4 位数字" aria-describedby="pin-hint pin-error"><p id="pin-hint" class="hint">接单后用来打开你的照片空间，请记住。不会显示在回执中。</p><p id="pin-error" class="field-error"></p></div></div>
+              <details class="more-preferences"><summary><span>补充更多拍摄偏好 <small>选填，可以跳过</small></span><svg><use href="#plus"/></svg></summary><div class="preferences-body">
+                <fieldset class="field"><legend>你的预算范围</legend><div class="choice-chips" data-options="budget"><label><input type="radio" name="budget" value="1000以下"><span>1000 以下</span></label><label><input type="radio" name="budget" value="1000～3000"><span>1000～3000</span></label><label><input type="radio" name="budget" value="3000～6000"><span>3000～6000</span></label><label><input type="radio" name="budget" value="6000以上"><span>6000 以上</span></label><label><input type="radio" name="budget" value="还没想好"><span>还没想好</span></label></div></fieldset>
+                <fieldset class="field"><legend>大概什么时候拍摄？</legend><div class="choice-chips"><label><input type="radio" name="when" value="一个月内"><span>一个月内</span></label><label><input type="radio" name="when" value="三个月内"><span>三个月内</span></label><label><input type="radio" name="when" value="半年内"><span>半年内</span></label><label><input type="radio" name="when" value="还没定"><span>还没定</span></label></div></fieldset>
+                <label class="check-line"><input type="checkbox" name="flexible" checked>日期可以灵活安排</label><div class="field"><label for="time-notes">意向日期或时间说明</label><input id="time-notes" name="timeNotes" maxlength="200" placeholder="例如：12 月中旬的周末"></div>
+                <fieldset class="field"><legend>你最在意哪些方面？</legend><div class="choice-chips" id="priorities"></div></fieldset>
+                <fieldset class="field"><legend>偏好的拍摄地点</legend><div class="choice-chips"><label><input type="checkbox" name="location" value="公园"><span>公园</span></label><label><input type="checkbox" name="location" value="室内"><span>室内</span></label><label><input type="checkbox" name="location" value="街道"><span>街道</span></label></div></fieldset>
+                <div class="field"><label for="avoid">想避免什么情况？</label><textarea id="avoid" name="avoid" placeholder="例如：不希望过度修饰面部，也不太会摆姿势" maxlength="1000" rows="3"></textarea></div><div class="field"><label for="source">从哪里知道我们？</label><input id="source" name="source" maxlength="120" placeholder="朋友介绍、小红书……"></div>
+              </div></details>
+              <div id="form-error" class="form-error" role="alert" hidden>请补全标出的必填内容，已有输入会保留。</div>
+              <div class="form-actions"><p>提交的是咨询意向，不是预约成功。无需在线付款。</p><button class="button primary desktop-submit" type="submit">提交拍摄咨询 <svg><use href="#arrow"/></svg></button><small>仅为该工作室沟通使用。原型不会发送、保存或创建真实咨询。</small></div>
+            </form>
+          </section>
+        </div>
+        <aside class="plan-rail" aria-label="拍摄计划摘要"><div class="plan-card"><p class="eyebrow">YOUR LITTLE PLAN</p><h2>先有个小小的想法</h2><p class="rail-intro">不必马上决定，随时可以修改。</p><dl><div><dt>拍摄方式</dt><dd class="package-label">暂不决定，沟通后再定</dd></div><div><dt>意向时间</dt><dd class="chosen-slot-label">稍后与摄影师沟通</dd></div><div><dt>参考作品</dt><dd><span class="selected-number">0</span> 张 <span class="optional">可不选</span></dd></div></dl><a class="button primary" href="#inquiry">填写拍摄咨询 <svg><use href="#arrow"/></svg></a><p class="hint"><svg><use href="#time"/></svg>摄影师确认后，档期才会保留。</p></div><div class="how-it-works"><span>1 <b>提交想法</b></span><i>→</i><span>2 <b>微信沟通</b></span><i>→</i><span>3 <b>确认拍摄</b></span></div></aside>
+      </div>
+      <footer class="page-footer page-width"><span class="footer-brand">拾光摄影</span><p>把日子过慢一点，把回忆留久一点。</p><small>设计原型 / 所有套餐、档期及作品均为示意 · 图片来自 Unsplash</small></footer>
+    </main>
+    <div class="phone-action" id="phone-action"><a href="#portfolio"><strong>参考作品 <span class="selected-number">0</span> 张</strong><small id="phone-action-hint">可不选，直接聊聊也可以</small></a><button class="button primary" id="phone-main-action">咨询拍摄 <svg><use href="#arrow"/></svg></button></div>
+  </div>
+
+  <div id="studio-view" hidden>
+    <aside class="studio-sidebar"><a class="studio-wordmark" href="?view=studio">PROOFROOM<small>摄影工作台</small></a><button class="studio-switch" id="studio-switch"><span class="brand-mark">拾</span><span>拾光摄影<small>所有者</small></span><svg><use href="#chevron"/></svg></button><nav aria-label="摄影师导航"><button data-module="home"><svg><use href="#home"/></svg>工作台<span>5</span></button><button data-module="projects"><svg><use href="#grid"/></svg>项目<span>7</span></button><button data-module="new"><svg><use href="#plus"/></svg>新建</button><button data-module="inquiries"><svg><use href="#chat"/></svg>咨询<span>3</span></button><button data-module="mine" aria-current="page"><svg><use href="#user"/></svg>我的</button></nav><p>从容创作，妥善交付。</p><button class="studio-signout" data-demo-entry="退出登录">退出登录</button></aside>
+    <div class="studio-workspace"><header class="studio-top"><span class="phone-capsule"><button aria-label="返回上一页" id="studio-mobile-back">←</button><button aria-label="工作室菜单" id="studio-mobile-more">•••</button></span><h1 id="studio-page-title">我的</h1><span class="studio-identity">摄影师 · 拾光摄影 <span class="avatar">拾</span></span></header><main class="studio-content" id="studio-content"></main></div>
+    <nav class="studio-phone-nav" aria-label="摄影师手机导航"><button data-module="home"><svg><use href="#home"/></svg>工作台</button><button data-module="projects"><svg><use href="#grid"/></svg>项目</button><button data-module="new" class="studio-new"><svg><use href="#plus"/></svg>新建</button><button data-module="inquiries"><svg><use href="#chat"/></svg>咨询</button><button data-module="mine" aria-current="page"><svg><use href="#user"/></svg>我的</button></nav>
+  </div>
+
+  <dialog id="about-dialog" class="standard-dialog"><div class="dialog-heading"><h2>关于摄影师</h2><button class="icon-button" data-close aria-label="关闭"><svg><use href="#close"/></svg></button></div><div class="dialog-body"><p class="eyebrow">在光里，记录日常</p><h3 data-brand>拾光摄影</h3><p id="full-intro">我们喜欢自然光，也喜欢每个人不经意流露的样子。拍照时可以散步、聊天，不必一直看着镜头。个人写真、情侣和家庭记录，都从一次轻松的沟通开始。</p><p class="hint">这里保留工作室完整介绍。首页仅展示简短摘要，避免长内容挡住作品。</p></div></dialog>
+
+  <dialog id="group-dialog" class="standard-dialog"><div class="dialog-heading"><h2>选择作品分类</h2><button class="icon-button" data-close aria-label="关闭"><svg><use href="#close"/></svg></button></div><div class="dialog-body full-groups" id="full-groups"></div></dialog>
+
+  <dialog id="slot-dialog" class="slot-dialog"><div class="dialog-heading"><div><p class="eyebrow">选填 · 预约意向</p><h2>什么时候方便拍摄？</h2></div><button class="icon-button" data-close aria-label="关闭"><svg><use href="#close"/></svg></button></div><div class="dialog-body"><p class="hint">灰色时段已有预约，无法选择。选择后仍需摄影师确认。</p><div class="date-tabs" role="tablist" aria-label="预约日期"></div><div class="slot-times" id="slot-times"></div><button class="none-slot" id="none-slot" aria-pressed="false">暂不选时段，与摄影师另约</button><div id="slot-message" class="notice" role="status" hidden></div><button class="text-button" id="slot-failure">演示：时段读取失败</button></div><div class="slot-footer"><p id="slot-summary">请选择时段，也可以选择暂不预约。</p><button class="button primary" id="confirm-slot" disabled>确认意向时段</button></div></dialog>
+
+  <dialog id="lightbox" class="lightbox"><div class="lightbox-top"><span id="lightbox-count"></span><button class="icon-button" data-close aria-label="关闭大图"><svg><use href="#close"/></svg></button></div><div class="lightbox-image"><button class="icon-button previous" id="previous-photo" aria-label="上一张"><svg><use href="#chevron"/></svg></button><img id="large-photo" alt=""><button class="icon-button next" id="next-photo" aria-label="下一张"><svg><use href="#chevron"/></svg></button></div><div class="lightbox-bottom"><div><h2 id="lightbox-title"></h2><p>界面示意作品</p></div><button class="button" id="lightbox-select">选作参考</button></div></dialog>
+
+  <dialog id="receipt-dialog" class="standard-dialog receipt-dialog"><div class="dialog-heading"><h2>咨询回执 · 原型演示</h2><button class="icon-button" data-close aria-label="关闭"><svg><use href="#close"/></svg></button></div><div class="dialog-body"><span class="success-icon"><svg><use href="#check"/></svg></span><h3>你的拍摄想法，已经整理好了</h3><p>正式页面提交后，摄影师会通过微信与你沟通。确认接单后，才会创建项目并保留档期。</p><dl id="receipt-summary"></dl><p class="notice">当前仅演示回执：没有发送信息、创建咨询或占用任何档期。访问码不会显示在这里。</p><button class="button primary" data-close>继续体验原型</button></div></dialog>
+
+  <dialog id="copy-dialog" class="standard-dialog"><div class="dialog-heading"><h2>复制摄影师微信</h2><button class="icon-button" data-close aria-label="关闭"><svg><use href="#close"/></svg></button></div><div class="dialog-body"><p>浏览器暂不支持自动复制，请选中后手动复制。</p><input readonly value="shiguang_photo" aria-label="摄影师微信"><p class="hint">复制不代表已发送信息。</p></div></dialog>
+
+  <dialog id="notes-dialog" class="standard-dialog notes-dialog"><div class="dialog-heading"><div><p class="eyebrow">DESIGN REVIEW / V1</p><h2>让客户一眼看懂，少一点猜测</h2></div><button class="icon-button" data-close aria-label="关闭"><svg><use href="#close"/></svg></button></div><div class="dialog-body"><p class="notes-lead">先看作品建立信任，再了解方案与答案，最后只填必要信息。原有信息和功能保留，用清楚的层级和按需展开降低负担。</p><ol class="design-notes"><li><strong>工作室介绍不再霸占首屏</strong><p>首页约两行摘要；“了解摄影师”明确打开完整介绍，超长名称完整内容也能读取。</p></li><li><strong>分类要看起来就能点</strong><p>有底色、边框、选中态、横向滑动提示，支持键盘方向键。完整分类列表解决长名称，不把几行长文当成按钮。</p></li><li><strong>问与答同时可见</strong><p>每条问题下面直接显示答案。只有长内容需要“展开完整问答”，不把所有答案默认藏起来。</p></li><li><strong>作品、套餐、时段，只选择一次</strong><p>参考选择跨分类保留；套餐点击后同步计划摘要和咨询表单。时段在弹层草选，确认才回填，关闭则保留原选择。</p></li><li><strong>必填放前面，选填可展开</strong><p>保称呼、类型、微信和4位码；预算、时间说明、来源、在意与避免、地点等选填收进补充偏好。正式实现仍遵守工作室配置的必填规则、题目ID和顺序。</p></li><li><strong>电脑和手机各用合适的空间</strong><p>电脑有计划摘要侧栏；手机两列作品、单列填写、底部主操作。摄影师电脑保侧栏，顶部不再有独立返回按钮；手机保胶囊返回。</p></li></ol><div class="review-controls"><button class="button outline" id="toggle-long" aria-pressed="false">切换：长内容检查</button><button class="button outline" id="show-public-from-notes">查看客户页</button><button class="button outline" id="show-studio-from-notes">查看摄影师导航</button></div><p class="notice">本版等待你确认后再实施正式React代码。当前静态原型不接业务API，不修改功能、数据或登录。示意内容与图片不代表真实工作室服务承诺。</p><details><summary>保留功能与实施边界</summary><p>保留作品分组、大图和跨组最多15张参考；套餐详情、意向套餐、完整FAQ；问卷短答/长答/单选/多选/联系/参考图、自定义问题；灵活日期/时间说明/意向档期；四位访问码、错误保留、私密回执及源文件说明。正式实施时保原草稿、版本核对、幂等、未知结果恢复、租户/登录规则。</p><p>本原型可以体验分类、参考、套餐、预约草选、表单校验与演示回执；摄影师端是导航与布局示意，其余模块只展示保留入口。</p></details><p class="image-credits">示意图片：<a href="https://images.unsplash.com/photo-1524504388940-b1c1722653e1" target="_blank" rel="noreferrer">人像</a>、<a href="https://images.unsplash.com/photo-1534528741775-53994a69daeb" target="_blank" rel="noreferrer">人像 2</a>、<a href="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2" target="_blank" rel="noreferrer">情侣</a>、<a href="https://images.unsplash.com/photo-1511895426328-dc8714191300" target="_blank" rel="noreferrer">家庭</a>、<a href="https://images.unsplash.com/photo-1470770841072-f978cf4d019e" target="_blank" rel="noreferrer">风景</a>、<a href="https://images.unsplash.com/photo-1500648767791-00dcc994a43e" target="_blank" rel="noreferrer">形象</a>（Unsplash），仅本地设计评审。</p></div></dialog>
+  <div id="toast" role="status" class="toast" hidden></div>
+</body>
+</html>

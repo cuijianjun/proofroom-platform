@@ -1,0 +1,45 @@
+'use client';
+import {useEffect,useId,useRef,useState} from 'react';
+import {createPortal} from 'react-dom';
+import {Button} from '.';
+import {Dialog} from './dialog';
+import {Icon} from './icons';
+
+export type BookingChoice={id:string;startAt:string;endAt:string;version:number;enabled?:boolean;projectId?:string|null;available?:boolean};
+const dayKey=(date:string)=>new Date(Date.parse(date)+8*3600000).toISOString().slice(0,10);
+const dateLabel=(date:string)=>new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',month:'long',day:'numeric',weekday:'short'}).format(new Date(date));
+const timeLabel=(date:string)=>new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date(date));
+export function DateCalendar({label,value,onChange,minDate=dayKey(new Date().toISOString())}:{label:string;value:string;onChange:(value:string)=>void;minDate?:string}){
+ const [month,setMonth]=useState(()=>(value||dayKey(new Date().toISOString())).slice(0,7)),[year,m]=month.split('-').map(Number),offset=(new Date(Date.UTC(year,m-1,1)).getUTCDay()+6)%7,count=new Date(Date.UTC(year,m,0)).getUTCDate();
+ function move(delta:number){setMonth(new Date(Date.UTC(year,m-1+delta,1)).toISOString().slice(0,7));}
+ return <fieldset className="date-calendar"><legend tabIndex={-1}>{label}</legend><div className="calendar-heading"><button className="btn-ghost" type="button" aria-label="上个月" disabled={!!minDate&&month<=minDate.slice(0,7)} onClick={()=>move(-1)}><Icon.ChevronLeft/></button><strong aria-live="polite">{year}年{m}月</strong><button className="btn-ghost" type="button" aria-label="下个月" onClick={()=>move(1)}><Icon.ChevronRight/></button></div><div className="calendar-grid">{['一','二','三','四','五','六','日'].map(d=><span className="calendar-weekday" key={d} aria-hidden="true">{d}</span>)}{Array.from({length:offset},(_,i)=><span key={'blank'+i}/>)}{Array.from({length:count},(_,i)=>{const key=month+'-'+String(i+1).padStart(2,'0');return <button type="button" key={key} data-calendar-date={key} aria-label={`${year}年${m}月${i+1}日`} aria-pressed={value===key} disabled={!!minDate&&key<minDate} onClick={()=>onChange(key)}>{i+1}</button>;})}</div>{value&&<p className="hint">已选：{value.replaceAll('-',' / ')}</p>}</fieldset>;
+}
+export function SlotPicker({label,slots,value,onChange,currentProjectId,noneLabel='暂不预约，之后再约',disabled=false,hint,name,onRefresh,active:enabled=true,availabilityKnown=true}:{label:string;slots:BookingChoice[];value:string;onChange:(value:string)=>void;currentProjectId?:string;noneLabel?:string;disabled?:boolean;hint?:string;name?:string;onRefresh?:()=>void;active?:boolean;availabilityKnown?:boolean}){
+ const uid=useId(),trigger=useRef<HTMLButtonElement>(null),dates=useRef<HTMLDivElement>(null),[open,setOpen]=useState(false),[draft,setDraft]=useState(''),[picked,setPicked]=useState(false),[day,setDay]=useState(''),[now,setNow]=useState(()=>Date.now());
+ useEffect(()=>{if(!enabled)return;const refresh=()=>{setNow(Date.now());if(document.visibilityState==='visible')onRefresh?.();};const timer=setInterval(refresh,30000);window.addEventListener('focus',refresh);return()=>{clearInterval(timer);window.removeEventListener('focus',refresh);};},[onRefresh,enabled]);
+ const visible=slots.filter(s=>Date.parse(s.endAt)>now||s.projectId===currentProjectId&&!!currentProjectId);
+ const days=[...new Set(visible.map(s=>dayKey(s.startAt)))].sort(),selected=visible.find(s=>`${s.id}:${s.version}`===value),proposed=visible.find(s=>`${s.id}:${s.version}`===draft);
+ const active=days.includes(day)?day:proposed?dayKey(proposed.startAt):days[0];
+ useEffect(()=>{if(open)dates.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});},[open,active]);
+ function state(slot:BookingChoice,at=now){if(currentProjectId&&slot.projectId===currentProjectId)return 'current';if(slot.projectId||slot.available===false)return 'occupied';if(slot.enabled===false)return 'closed';if(Date.parse(slot.startAt)<=at)return 'past';return 'available';}
+ function endLabel(slot:BookingChoice){const start=dayKey(slot.startAt),end=dayKey(slot.endAt);return (end===start?'':Date.parse(end)-Date.parse(start)===86400000?'次日 ':`${end.slice(5).replace('-','/')} `)+timeLabel(slot.endAt);}
+ function range(slot:BookingChoice){return `${dateLabel(slot.startAt)} ${timeLabel(slot.startAt)} — ${endLabel(slot)}`;}
+ const invalid=!!value&&(!selected||!['available','current'].includes(state(selected))),draftInvalid=!!draft&&(!proposed||!['available','current'].includes(state(proposed))),canConfirm=picked&&!disabled&&availabilityKnown&&!draftInvalid;
+ function close(){setOpen(false);requestAnimationFrame(()=>{const button=trigger.current;if(button?.disabled)button.parentElement?.querySelector<HTMLElement>('legend')?.focus();else button?.focus();});}
+ function show(){setDraft(value);setPicked(!!value);setDay(selected?dayKey(selected.startAt):days.find(key=>visible.some(s=>dayKey(s.startAt)===key&&state(s)==='available'))??days[0]??'');setOpen(true);}
+ const unknown='时段尚未核对，读取完成或重试成功后才能确认。',empty='暂未开放可预约时段，可先与摄影师沟通。';
+ return <fieldset className="slot-picker" data-selected-slot={value} aria-describedby={`${uid}-hint`}>
+  <legend tabIndex={-1}>{label}</legend>{name&&<input type="hidden" name={name} value={value}/>}
+  <p className="hint" id={`${uid}-hint`}>{hint??'中国时间 · 灰色时段不可选择'}</p>
+  <button ref={trigger} type="button" className="slot-trigger" aria-label={value?'更换预约时段':'选择预约时段'} aria-haspopup="dialog" aria-expanded={open} disabled={disabled} onClick={show}><Icon.Calendar size={20}/><span>{value?selected?range(selected):'原选择已变化，请重新选择':noneLabel}<small>{value?'点击更换时间':'点击选择日期和时段'}</small></span><Icon.ChevronRight/></button>
+  {!availabilityKnown?<p className="slot-empty" role="status">{unknown}</p>:!days.length&&<p className="slot-empty" role="status">{empty}</p>}
+  {invalid&&<p className="field-error" role="status">原选择已变化或被占用，请重新选择；其他填写内容已保留。</p>}
+  {open&&enabled&&createPortal(<Dialog className="booking-sheet" open={true} title="选择预约时段" onClose={close} footer={<div className="slot-sheet-footer"><p role="status">{draftInvalid?'所选时段已变化，请重新选择':picked?proposed?range(proposed):noneLabel:'请选择一个时段，也可以选择暂不预约'}</p><Button type="button" disabled={!canConfirm} onClick={()=>{if(!canConfirm)return;if(proposed&&!['available','current'].includes(state(proposed,Date.now()))){setNow(Date.now());return;}onChange(draft);close();}}>确认选择</Button></div>}>
+   <p className="hint">{label} · 中国时间</p>
+   {!availabilityKnown&&<div className="notice"><p role="status">{unknown}</p>{onRefresh&&<Button type="button" variant="secondary" onClick={onRefresh}>重新读取时段</Button>}</div>}
+   {days.length>0?<div className="slot-board"><div ref={dates} className="slot-dates" aria-label="预约日期">{days.map(key=>{const same=visible.filter(s=>dayKey(s.startAt)===key),count=same.filter(s=>state(s)==='available').length,current=same.some(s=>state(s)==='current');return <button type="button" key={key} data-date={key} aria-label={dateLabel(same[0].startAt)} aria-pressed={key===active} className="slot-date" onClick={e=>{setDay(key);e.currentTarget.scrollIntoView({block:'nearest',inline:'nearest'});}}><span>{new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',weekday:'short'}).format(new Date(same[0].startAt))}</span><strong>{key.slice(5).replace('-','/')}</strong><small>{!availabilityKnown?'待核对':count?`${count}个可约`:current?'当前预约':same.some(s=>state(s)==='occupied')?'已约满':'未开放'}</small></button>;})}</div>
+   <div className="slot-day-times">{days.map(key=><div className="slot-times" key={key} hidden={key!==active}>{visible.filter(s=>dayKey(s.startAt)===key).map(slot=>{const status=state(slot),choice=`${slot.id}:${slot.version}`,chosen=draft===choice,unavailable=!['available','current'].includes(status);return <button type="button" key={slot.id} className="slot-time" data-slot-id={slot.id} data-slot-value={choice} data-slot-day={key} data-state={status} disabled={disabled||unavailable||!availabilityKnown} aria-pressed={chosen} onClick={()=>{setDraft(choice);setPicked(true);}}><strong>{timeLabel(slot.startAt)}</strong><span className="slot-end">至 {endLabel(slot)}</span><small>{!availabilityKnown?'待核对':status==='current'?'当前预约':status==='occupied'?'已预约':status==='closed'?'未开放':status==='past'?'已过期':chosen?'已选择':'可预约'}{chosen&&<Icon.Check size={12}/>}</small></button>;})}</div>)}</div></div>:availabilityKnown&&<p className="slot-empty" role="status">{empty}</p>}
+   <button type="button" className="slot-none" data-slot-value="" disabled={disabled||!availabilityKnown} aria-pressed={picked&&!draft} onClick={()=>{setDraft('');setPicked(true);}}>{noneLabel}{picked&&!draft&&<Icon.Check size={15}/>}</button>
+  </Dialog>,document.body)}
+ </fieldset>;
+}

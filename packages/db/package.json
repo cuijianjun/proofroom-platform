@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "name": "@proofroom/db",
+  "exports": {
+    "./*": "./*.ts",
+    ".": "./index.ts"
+  },
+  "dependencies": {
+    "pg": "^8.16.0",
+    "pg-boss": "^12.0.0"
+  }
+}
