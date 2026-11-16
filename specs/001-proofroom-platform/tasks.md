@@ -179,3 +179,11 @@ M29验收：横向条右箭头实测按钮44×44、可见圆盘32px；/studio/mi
 - [x] T131 折叠项统一44px头部+箭头随开合旋转+支持时高度过渡（不破坏details语义）；手机勾选框22px、触区仍由44px label承担；空态图标收进圆形底片；减少动态效果关闭全部新增动效
 
 M30验收：折叠项实测blockSize 0→392→466→476px过渡0.28s、箭头45°→225°；成功反馈0.7s不透明、4.9s透明度0且命中测试落到下层字段；勾选框22×22、check-line 48px；骨架3行252px带role=status/aria-busy；步进键两枚44×44；320/390整页横向溢出0。presales/action-placement/interface-feedback/galleries/booking-profile共75项增量通过；product-experience两项T050/T051在暂存本批改动后同样失败（browserContext.newPage崩溃），判定为既有环境问题非本批回归。root/Web tsc通过。详见acceptance.md M30。
+
+
+## M31 · 真实 Chrome 内核复测与修复（2026-11-16）
+根proofroom@agent/proofroom-local-main(c9b9b2c)，只动 e2e 配置/增量用例与一条产品 CSS；平台后台、API/worker/packages、业务与数据不动，不重启服务、不部署。
+- [x] T132 用真实 Chrome 内核复测：定位 `chromiumSandbox` 与 `channel:'chrome'` 冲突导致的 `browserContext.newPage` 崩溃并移除；单条预算 45s→90s、T053 单条 150s；T094 静音后台轮询、T099 高度断言按亚像素口径、T050 下载按当前单次下载主卡、`inspect()` 只报看得见的越界
+- [x] T133 折叠箭头改 `clip-path` 绘制，消除旋转伪元素撑出的 3px 横向可滚动溢出，保留开合翻转与减少动态收敛
+
+M31验收：Chrome 157 渠道下 booking-profile + interface-feedback + presales 共 57 项 17.3 分钟全过；崩溃点 product-experience 两项全过（T050/T051 5.2 分钟）；root/Web tsc、架构边界、diff --check 均通过。详见acceptance.md M31。
