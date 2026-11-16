@@ -475,3 +475,38 @@ Playwright 真实 Chrome 渠道、单 worker、retries 0，复用 18186/18184 �
 - Web `tsc --noEmit` 通过；改动文件 `git diff --check` 干净。
 - 间距问题全部先用 DOM 实测（相邻块 `getBoundingClientRect()` 差值）定位再改，避免凭截图猜；改完复测 `/studio/account` 相邻块最小间距从 0 变为 16px，其余页面（profile/content/questionnaire/new/galleries/history/mine）实测无 <10px 的贴合。
 - 不扩称微信/手机真机、真实输入法或生产验收；软键盘弹起时占位文字的遮挡仍未纳入本轮证据。
+
+## M38 · 补完全部路由的真机走查，修掉手机端保存条被底部导航压住 · 2026-11-16
+T145完成。M37 只覆盖了 13 个页面，本轮把剩余路由（`/`、`/studio/login`、`/studio/register`、`/studio/portfolio`、`/studio/members`、`/c/<token>`、`/invite/<token>`）也逐屏看完，覆盖到 application.tsx 里的每一个 `path===` 分支。
+
+### 唯一新问题：手机端 `.save-bar` 被底部导航与凸起的「新建」按钮压住
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| `/studio/portfolio`、`/studio/profile`、`/studio/questionnaire` 滚动后，保存条只剩上沿一条缝，中间的「+ 新建」圆钮直接压在「取消修改 / 保存修改」上 | `.save-bar` 全局是 `sticky;bottom:18px`，移动端另有一条 `bottom:calc(82px + safe-area)`。82px 只够让开导航本体（74px），但导航中间的新建按钮是**凸起**的，圆形顶边在距底 92px 处，于是仍压住保存条 30px 高的一条 | 移动端这条改 `calc(104px + safe-area)`，比凸起圆钮再多让 12px。**不是新增规则**，是改既有那一条（先前新增的重复规则会被它覆盖，实测无效后已删除） |
+
+关键教训：`grep save-bar` 只看到 `globals.css` 一处定义时，还要继续搜 `@media` 段里同名类的覆写；我第一次加了一条新规则，实测 `getComputedStyle().bottom` 仍是 82px，才发现第 183 行已有一条移动端覆写。
+
+### T145 写法
+
+```ts
+for(const y of [0,400,900]){
+  await page.evaluate(v=>window.scrollTo(0,v),y);
+  const b=await bar.boundingBox(),n=await page.locator('.mobile-nav').boundingBox();
+  expect(b.y+b.height).toBeLessThanOrEqual(n.y-24);   // 24px = 凸起圆钮高出导航的 22px + 2
+}
+```
+
+阈值用「导航顶边 - 24」而不是「导航顶边」，因为凸起按钮的 `getBoundingClientRect()` 并不凸出（`top=779` 落在导航内部），凸起是绘制层面的，DOM 量不到；只能按已知几何倒推出 24px 的安全余量。已用旧值 82px 反向验证：该用例确实失败，改回 104px 后通过，说明它不是恒真断言。
+
+### 复核确认无需改动的两处
+
+- 客户公开页「刷新项目进度」按钮：P1 空态下 `Photos` 不渲染，`useRefreshRegistration` 没有任何注册，此时下拉刷新是空的，按钮是访客唯一入口。与 M33 结论一致，保留。
+- 登录页密码框比其它输入框窄一截：右侧「显示」按钮占位所致，宽度差是设计意图，不做「对齐」处理。
+
+### 本地实际验证
+
+- T145 单跑 `1 passed (3.1s)`；旧值 82px 下 `1 failed`，恢复 104px 后通过。
+- `interface-feedback` + `presales` + `booking-profile` + `selection` 回归见提交说明。
+- 全部路由实测 `document.scrollWidth === innerWidth`（390 宽），无横向溢出；无 <11px 正文字号（`.eyebrow` 10px 为既有设计）。
+- 未纳入本轮证据：桌面宽度逐页截图（仅用 1440/1280 做了间距与文案断言）、软键盘弹起时的遮挡、iOS Safari 安全区实机。

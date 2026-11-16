@@ -228,3 +228,7 @@ M36验收：T141/T142 单跑 `1 passed (6.5s)` / `1 passed (5.6s)`；`action-pla
 - [x] T144 卡片说明段与紧随的表单之间没有间距：`/studio/account` 里「成功后撤销其他设备会话，当前设备重新建立登录。」与下方「原密码」字段贴合（DOM 实测相邻块间距 0）。补一条 `.card-pad > p + form{margin-top:1rem}`，让「先说明后表单」的卡片统一留出呼吸空间。新增同名 T144 在两档宽度量说明段底部到首个字段顶部的距离 ≥12px。顺带修正 T141 里写错的 `/studio/settings`（该路由不存在，实际渲染「未找到工作台页面」空态，等于「工作室设置」从未被审计）：改为真实路由 `/studio/profile` 与 `/studio/account`，并在每页 audit 前断言页面上不存在「未找到工作台页面」，防止路由写错时零字段静默通过
 
 M37验收：T143 单跑 `1 passed (6.3s)`，T144 单跑 `1 passed (3.9s)`，修正后 T141 单跑 `1 passed (42.8s)`；`interface-feedback` + `presales` + `action-placement` 共 58 项 9.2 分钟 `58 passed`（含 T143）。详见 acceptance.md M37。
+
+### M38 · 补完剩余路由走查 + 手机端保存条让开底部导航（2026-11-16）
+
+T145 完成。M37 之后把 `/`、`/studio/login`、`/studio/register`、`/studio/portfolio`、`/studio/members`、`/c/<token>`、`/invite/<token>` 也逐屏看完，覆盖 application.tsx 全部路由分支。新发现并修复一处：移动端 `.save-bar` 的 `bottom:calc(82px + safe-area)` 只让开导航本体，导航中间凸起的「新建」圆钮仍压在保存条上，改为 `104px`；该值改的是 `globals.css` 第 183 行既有覆写，不是新增规则。新增 T145（三个滚动位置断言保存条下沿 ≤ 导航顶边 - 24px），并用旧值 82px 反向验证会失败。详见 acceptance.md M38。

@@ -262,3 +262,17 @@ test('T144: card copy never touches the first field of the form that follows it'
   expect(b.y-(a.y+a.height),`${width} 说明与首个字段之间应有呼吸空间`).toBeGreaterThanOrEqual(12);
  }
 });
+
+test('T145: 手机端保存条完整露出，不被底部导航与凸起的「新建」按钮压住',async({page})=>{
+ const s=await seed(page);
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(`/studio/portfolio?studio=${s.sid}`);
+ const bar=page.locator('.save-bar').first();
+ await expect(bar).toBeVisible();
+ for(const y of [0,400,900]){
+  await page.evaluate(v=>window.scrollTo(0,v),y);
+  await page.waitForTimeout(150);
+  const b=(await bar.boundingBox())!,n=(await page.locator('.mobile-nav').boundingBox())!;
+  expect(b.y+b.height,`y=${y} 保存条下沿压到底部导航（含凸起的新建按钮）`).toBeLessThanOrEqual(n.y-24);
+ }
+});
