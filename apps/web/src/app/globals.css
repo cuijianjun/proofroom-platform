@@ -663,9 +663,10 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
 [data-product-ui] .name-disclosure{min-width:0;overflow-wrap:anywhere}
 [data-product-ui] .name-disclosure[data-name-expandable=true]{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:end;column-gap:2px}
 [data-product-ui] .name-disclosure-text{min-width:0}
-[data-product-ui] .name-disclosure-toggle{display:flex;align-items:flex-end;justify-content:center;width:44px;min-width:44px;height:44px;padding:0 0 max(4px,calc(.675em - 9px));border:0;border-radius:8px;background:transparent;color:var(--color-muted);font:inherit;cursor:pointer}
+[data-product-ui] .name-disclosure-toggle{display:flex;align-items:flex-end;justify-content:center;width:44px;min-width:44px;height:44px;padding:0 0 max(4px,calc(.675em - 9px));border:0;background:transparent;color:var(--color-muted);font:inherit;cursor:pointer}
 [data-product-ui] .name-disclosure-toggle>svg,[data-product-ui] .name-disclosure-chevron{flex-shrink:0;transition:transform 160ms ease-out}
-[data-product-ui] .name-disclosure-toggle:hover{color:var(--color-pine);background:var(--color-surface-2)}
+[data-product-ui] .name-disclosure-toggle:hover{color:var(--color-pine)}
+[data-product-ui] .name-disclosure-toggle:active{color:var(--color-pine-dark)}
 [data-product-ui] .name-disclosure-toggle[aria-expanded=true]>svg,[data-product-ui] .client-brand-toggle[aria-expanded=true]>.name-disclosure-chevron{transform:rotate(180deg)}
 @media(prefers-reduced-motion:reduce){[data-product-ui] .name-disclosure-toggle>svg,[data-product-ui] .name-disclosure-chevron{transition:none}}
 
