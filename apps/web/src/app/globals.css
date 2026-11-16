@@ -734,12 +734,13 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
 @keyframes ack-dock{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes ack-fade{to{opacity:0;transform:translateY(4px)}}
 
-/* 折叠项：头部统一 44px 触区，箭头随开合旋转，支持时用高度过渡代替瞬时展开。 */
+/* 折叠项：头部统一 44px 触区，箭头随开合翻转，支持时用高度过渡代替瞬时展开。 */
 [data-product-ui] summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;touch-action:manipulation}
 [data-product-ui] summary::-webkit-details-marker{display:none}
-[data-product-ui] summary::after{content:'';width:7px;height:7px;flex:0 0 7px;margin-left:auto;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;opacity:.45;transform:rotate(45deg) translateY(-2px);transition:transform .2s ease,opacity .2s ease}
-[data-product-ui] details[open]>summary::after{transform:rotate(-135deg) translateY(-2px);opacity:.8}
-[data-product-ui] .project-tools>summary::after{content:'⌄';width:auto;height:auto;margin-left:8px;border:0;opacity:1;transform:none}
+/* 箭头用 clip-path 画，不用 transform：旋转后的伪元素会撑出 3px 可滚动溢出。 */
+[data-product-ui] summary::after{content:'';width:10px;height:10px;flex:0 0 10px;margin-left:auto;background:currentColor;opacity:.45;clip-path:polygon(50% 68%,4% 22%,14% 12%,50% 48%,86% 12%,96% 22%);transition:opacity .2s ease,clip-path .2s ease}
+[data-product-ui] details[open]>summary::after{opacity:.85;clip-path:polygon(50% 32%,4% 78%,14% 88%,50% 52%,86% 88%,96% 78%)}
+[data-product-ui] .project-tools>summary::after{content:'⌄';width:auto;height:auto;margin-left:8px;background:none;clip-path:none;opacity:1}
 @supports (interpolate-size:allow-keywords){
  [data-product-ui]{interpolate-size:allow-keywords}
  [data-product-ui] details::details-content{block-size:0;overflow:hidden;transition:block-size .28s cubic-bezier(.2,.8,.2,1),content-visibility .28s allow-discrete}
