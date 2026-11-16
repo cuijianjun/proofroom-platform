@@ -366,6 +366,30 @@ T141完成。用户反馈公开问卷的「怎么称呼你？」与「想拍什�
 
 `components/ui/fields.tsx` 的 `ColorField` / `DateTimeField` / `MoneyField` 全仓库零引用（`grep -rn "ColorField\|MoneyField\|DateTimeField\|ui/fields"` 为空），是早期遗留死代码。本轮不删（不在用户诉求内），但把里面的英文占位（`#1A2B3C`、`Pick a date and time`、`0.00`）一并改成中文，避免哪天被重新引用时又留下中英混排。
 
+### 第三处：下拉框的「选中感」问题
+
+真机截图复核时发现一个只看代码看不出来的副作用：下拉框的空选项文案从「请选择」换成「请选择你的预算范围」之后，**文字仍然是正常深色**（`rgb(34,32,29)`），跟已选中值一模一样，客户容易以为「已经选好了」。
+
+`Select` 的显示文案来自 `.select-value`，没有 `placeholder` 概念，所以给触发按钮加一个占位态标记 + 一条弱化字色的规则：
+
+```ts
+/** 空值且展示的是「请选择…」提示时按占位态弱化颜色；空值的真实选项（未分类/无颜色等）保持正常字色。 */
+const placeholder=current===''&&(selected<0||(choices[selected]?.label.startsWith('请选择')??false));
+```
+
+```css
+.select-trigger[data-placeholder] .select-value{color:var(--color-muted)}
+```
+
+条件是「空值 **且** 文案是提示语」，不能只用 `current===''`：全站共 6 处 `value=""` 的选项，其中「未分类」×2、「无颜色」「待核对对应」「尚未决定，与摄影师沟通」都是**真实选项**（选了它就是选了），只有「请选择项目 / 请选择{promptLabel}」才是提示。实测四档结果：
+
+| 下拉 | `data-placeholder` | 字色 |
+| --- | --- | --- |
+| 想拍什么类型的照片（未选） | true | `rgb(113,105,97)` 弱化 |
+| 你的预算范围（未选） | true | `rgb(113,105,97)` 弱化 |
+| 意向套餐 = 尚未决定，与摄影师沟通 | false | `rgb(34,32,29)` 正常 |
+| 想拍什么类型（选中「个人写真」后） | false | `rgb(34,32,29)` 正常 |
+
 ### T141 写法
 
 ```ts
@@ -376,12 +400,25 @@ for(const [path,context] of [['/studio/new','新建项目'],['/studio/settings',
 
 审计选择器排掉 `checkbox/radio/hidden/file/color`，逐项 `isVisible()` 后取 `placeholder`，空则把 `id || aria-label || name || outerHTML 前 60 字`记进 `missing`，最后 `expect(missing).toEqual([])`；同时 `expect(total).toBeGreaterThan(0)` 防止选择器写错后「零字段零缺失」假通过。公开问卷部分除了泛化审计，还钉住四条具体文案（`请输入你的称呼，例如：小林` / `请输入你的微信号，方便摄影师联系你` / `请输入 4 位数字访问码` / 下拉含「请选择想拍什么类型的照片」），保证文案被改坏时能立刻定位。
 
+### T142 写法
+
+```ts
+for(const width of [390,1440]){ /* 进公开问卷 */ }
+// 未选中的问题下拉：有 data-placeholder，字色 ≠ 已选值
+// 意向套餐（value="" 的真实选项）：无 data-placeholder，字色 = 正常深色
+// 选中「个人写真」后：data-value 更新、data-placeholder 消失、字色与正常值一致
+```
+
+比较的是 `getComputedStyle(.select-value).color`，不写死色值 —— 主题换色时用例仍然成立。两档宽度都跑，因为手机端走 `mobile-select-sheet`、桌面走浮层 listbox，是两条不同的交互路径。
+
 ### 本地实际验证
 
 Playwright 真实 Chrome 渠道、单 worker、retries 0，复用 18186/18184 隔离库，未重启/build/typegen。
 
-- T141 单跑 `1 passed (5.6s)`，合计 7.8s。
-- 受影响六 spec（presales + galleries + interface-feedback + delivery + action-placement + account）共 **73 项 6.7 分钟、`72 passed`**。
+- T141 单跑 `1 passed (5.6s)`，合计 7.8s；T142 单跑 `1 passed (5.6s)`。
+- `action-placement` 全量 16 项 1.6 分钟全过（含 T141 6.5s、T142）。
+- 受下拉字色影响的 presales + galleries + booking-profile 28 项 2.5 分钟全过。
+- 首轮受影响六 spec（presales + galleries + interface-feedback + delivery + action-placement + account）共 **73 项 6.7 分钟、`72 passed`**。
 - 唯一 failed 是 `account.spec.ts:18` UI03/AT39：`locator.click` 等成员列表行内 `member-…@example.test` 的「移除」按钮 15s 超时。单跑复现（19.3s）后 `git stash push -u` 回到 HEAD `9d45bd3` 复跑**同样失败**（`1 failed (19.3s)`），确认与本轮 placeholder 改动无关，判为既有失败，未改用例。
 - root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 输出 `Web/contracts boundary passes`；`git diff --check` 干净；18 个改动文件 eslint `0 errors, 25 warnings`（全部为既有的 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）。
 - 不扩称微信/手机真机、真实输入法或生产验收；占位文字在真实软键盘弹起时的遮挡未纳入本轮证据。

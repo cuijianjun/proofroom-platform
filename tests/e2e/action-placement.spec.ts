@@ -307,3 +307,20 @@ test('T141: every visible text field shows a friendly placeholder and required q
   await page.setViewportSize({width:1440,height:900});await page.goto(`${path}?studio=${s.sid}`);await page.waitForLoadState('networkidle');await audit(context);
  }
 });
+
+test('T142: empty dropdowns read as placeholders while real empty-value options keep normal ink',async({page})=>{
+ test.setTimeout(90000);const s=await seed(page);
+ const valueColor=(id:string)=>page.locator(id).locator('.select-value').evaluate(el=>getComputedStyle(el).color);
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/t/'+s.slug);await page.locator('#answer-q2').waitFor();
+  await expect(page.locator('#answer-q2')).toHaveAttribute('data-placeholder','true');
+  await expect(page.locator('#intended-package')).not.toHaveAttribute('data-placeholder','true');
+  const prompt=await valueColor('#answer-q2'),decided=await valueColor('#intended-package');
+  expect(prompt,`${width} 未选择的下拉应按占位色显示`).not.toBe(decided);
+  await page.locator('#answer-q2').scrollIntoViewIfNeeded();await page.locator('#answer-q2').click();
+  await page.getByRole('option',{name:'个人写真',exact:true}).click();
+  await expect(page.locator('#answer-q2')).toHaveAttribute('data-value','个人写真');
+  await expect(page.locator('#answer-q2')).not.toHaveAttribute('data-placeholder','true');
+  expect(await valueColor('#answer-q2'),`${width} 选中后应恢复正常字色`).toBe(decided);
+ }
+});

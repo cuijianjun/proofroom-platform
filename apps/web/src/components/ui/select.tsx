@@ -24,6 +24,8 @@ export function Select({children,className,id,value,defaultValue,onChange,onInva
  const current=controlled?String(value):local,selected=choices.findIndex(c=>c.value===current),firstEnabled=choices.findIndex(c=>!c.disabled);
  const highlighted=choices[active]&&!choices[active].disabled?active:selected>=0&&!choices[selected].disabled?selected:firstEnabled;
  const label=selected>=0?choices[selected].label:current?'选项已变化，请重新选择':choices.length?'请选择':'暂无可选项';
+ /** 空值且展示的是「请选择…」提示时按占位态弱化颜色；空值的真实选项（未分类/无颜色等）保持正常字色。 */
+ const placeholder=current===''&&(selected<0||(choices[selected]?.label.startsWith('请选择')??false));
  const issue=selected<0&&current?'选项已变化，请重新选择':required&&!current?'请选择一项':selected>=0&&choices[selected].disabled?'此选项暂不可用，请重新选择':'';
  const measure=useCallback(()=>{
   const button=trigger.current;if(!button)return false;const rect=button.getBoundingClientRect();
@@ -75,7 +77,7 @@ export function Select({children,className,id,value,defaultValue,onChange,onInva
   <select {...nativeProps} ref={native} hidden aria-hidden="true" tabIndex={-1} disabled={disabled} required={required} value={current} onChange={change} onInvalid={event=>{event.preventDefault();setError(issue||'请选择一个可用选项');trigger.current?.focus();onInvalid?.(event);}}>
    {selected<0&&current&&<option value={current} disabled hidden>{label}</option>}{children}
   </select>
-  <button ref={trigger} id={triggerId} type="button" role="combobox" className={['select','select-trigger',className].filter(Boolean).join(' ')} disabled={disabled} aria-label={ariaLabel} aria-labelledby={ariaLabelledBy} aria-describedby={[description,error?`${uid}-error`:undefined].filter(Boolean).join(' ')||undefined} aria-invalid={!!error||externalInvalid||undefined} aria-required={required||undefined} aria-expanded={open} aria-controls={listId} aria-haspopup="listbox" aria-activedescendant={open&&highlighted>=0?`${uid}-option-${highlighted}`:undefined} data-value={current} data-field-path={fieldPath} onKeyDown={key} onClick={()=>open?setOpen(false):show()}>
+  <button ref={trigger} id={triggerId} type="button" role="combobox" className={['select','select-trigger',className].filter(Boolean).join(' ')} disabled={disabled} aria-label={ariaLabel} aria-labelledby={ariaLabelledBy} aria-describedby={[description,error?`${uid}-error`:undefined].filter(Boolean).join(' ')||undefined} aria-invalid={!!error||externalInvalid||undefined} aria-required={required||undefined} aria-expanded={open} aria-controls={listId} aria-haspopup="listbox" aria-activedescendant={open&&highlighted>=0?`${uid}-option-${highlighted}`:undefined} data-value={current} data-placeholder={placeholder||undefined} data-field-path={fieldPath} onKeyDown={key} onClick={()=>open?setOpen(false):show()}>
    <span className="select-value">{label}</span><Icon.ChevronDown className="select-chevron" size={17}/>
   </button>
   {open&&(mobile?<><button type="button" className="mobile-select-backdrop" aria-label="取消选择" tabIndex={-1} onClick={cancel}/><div className="mobile-select-sheet"><div className="mobile-select-toolbar"><span>请选择</span><button type="button" onClick={cancel}>取消</button></div><div ref={list} id={listId} role="listbox" aria-labelledby={triggerId} className="select-listbox">{optionNodes}</div></div></>:<div ref={list} id={listId} role="listbox" aria-labelledby={triggerId} className="select-listbox" style={placement}>{optionNodes}</div>)}
