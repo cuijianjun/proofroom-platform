@@ -303,8 +303,10 @@ test('T141: every visible text field shows a friendly placeholder and required q
   await expect(page.getByRole('combobox',{name:'想拍什么类型的照片？ *',exact:true})).toContainText('请选择想拍什么类型的照片');
   await audit(`公开问卷 ${width}`);
  }
- for(const [path,context] of [['/studio/new','新建项目'],['/studio/settings','工作室设置'],['/studio/galleries','图库列表'],['/studio/history','历史记录']] as const){
-  await page.setViewportSize({width:1440,height:900});await page.goto(`${path}?studio=${s.sid}`);await page.waitForLoadState('networkidle');await audit(context);
+ for(const [path,context] of [['/studio/new','新建项目'],['/studio/profile','工作室资料'],['/studio/account','账号安全'],['/studio/galleries','图库列表'],['/studio/history','历史记录']] as const){
+  await page.setViewportSize({width:1440,height:900});await page.goto(`${path}?studio=${s.sid}`);await page.waitForLoadState('networkidle');
+  // 路由写错会渲染「未找到工作台页面」空态，此时零字段也躲得过 audit，所以先钉住页面真实存在
+  await expect(page.getByText('未找到工作台页面'),`${context} 必须是真实路由`).toHaveCount(0);await audit(context);
  }
 });
 

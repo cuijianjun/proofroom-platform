@@ -422,3 +422,56 @@ Playwright 真实 Chrome 渠道、单 worker、retries 0，复用 18186/18184 �
 - 唯一 failed 是 `account.spec.ts:18` UI03/AT39：`locator.click` 等成员列表行内 `member-…@example.test` 的「移除」按钮 15s 超时。单跑复现（19.3s）后 `git stash push -u` 回到 HEAD `9d45bd3` 复跑**同样失败**（`1 failed (19.3s)`），确认与本轮 placeholder 改动无关，判为既有失败，未改用例。
 - root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 输出 `Web/contracts boundary passes`；`git diff --check` 干净；18 个改动文件 eslint `0 errors, 25 warnings`（全部为既有的 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）。
 - 不扩称微信/手机真机、真实输入法或生产验收；占位文字在真实软键盘弹起时的遮挡未纳入本轮证据。
+
+## M37 · 真机逐屏走查修掉的三处「代码审查看不出」· 2026-11-16
+T143/T144完成。M36 之后按用户「继续执行任务」在真实 Chrome 里逐屏看客户问卷、工作台首页、我的、项目详情、回执页、工作台各设置页（`/studio/profile`、`/content`、`/questionnaire`、`/account`、`/schedule`、`/galleries`、`/help`、`/history`、`/new`），390×844 / 两档宽度滚动截图。代码审查看不出、只有真机才暴露的三处问题如下。
+
+### 问题与修法
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| 空表单提交提示「请填写怎么称呼你？」「请填写想拍什么类型的照片？」 | 统一用 `请填写${q.label}` 拼接；选择题说「填写」不准确，且 label 末尾的问号被带进提示 | 新增 `requiredMessage(q)` 按题型/固定项分支生成「请填写你的称呼」「请选择「想拍什么类型的照片」」「请填写你的微信号，方便摄影师联系你」；访问码另写「请填写 4 位数字访问码」 |
+| 「微信用于沟通，四位访问码用于之后的项目访问」出现在「从哪里知道我们（选填）」上方 | `Field` 的 `hint` 只渲染在输入框之后，而这个 hint 属于整个 q8 联系组，写在了组内末尾字段上 | 联系项的 `hint` 不再交给 `Field`，改为在微信号输入框之后单独渲染 `p.hint` |
+| 「项目访问码（四位数字）」label 紧贴「从哪里知道我们」输入框 | `.public-question` 只有 `width:100%`，相邻两个 `Field` 之间没有间距 | `.public-question{display:flex;flex-direction:column;gap:18px}` |
+| `/studio/account`「成功后撤销其他设备会话…」与「原密码」贴合（实测相邻块间距 0） | 卡片里 `<p>` 直接接 `<form>`，两者之间没有任何 margin | `.card-pad > p + form{margin-top:1rem}` |
+
+顺带把 `error` 从「始终渲染空 `.field-error`」改成 `{error&&…}`，一次提交少 6 个空节点。
+
+### T143 写法
+
+```ts
+for(const width of [390,1440]){ /* 进 /t/<slug>，直接点「提交拍摄咨询」 */ }
+// 四条文案必须精确可见：请填写你的称呼 / 请选择「想拍什么类型的照片」/ 请填写你的微信号，方便摄影师联系你 / 请填写 4 位数字访问码
+// .field-error:empty 计数 = 0（没出错的项目不渲染空节点）
+// 用 compareDocumentPosition 断言：hint 在微信号输入框之后、且在「项目访问码」label 之前
+```
+
+顺序断言用 `Node.DOCUMENT_POSITION_FOLLOWING` 位运算，而不是比 `boundingBox().y` —— 后者在同一行两栏（桌面）下会误判，DOM 先后才是「说明归谁」的语义证据。
+
+### T144 写法
+
+```ts
+await page.goto(`/studio/account?studio=${sid}`);
+for(const width of [390,1280]){
+  const a=await note.boundingBox(),b=await label.boundingBox();
+  expect(b.y-(a.y+a.height)).toBeGreaterThanOrEqual(12);
+}
+```
+
+阈值取 12px 而不是精确 16px：`mt-4` 在压缩断点下可能被覆写，但「明显贴上」与「有呼吸」之间的分界是能不能一眼看出层级，12px 已经能守住。
+
+### T141 的路由修正（M36 遗留）
+
+T141 的审计清单里写的是 `/studio/settings`，这个路由在本项目**不存在**（真实设置页是 `/studio/profile`、`/content`、`/questionnaire`、`/account`...），访问它渲染的是 `<Empty title="未找到工作台页面">`。因为 audit 是跨页累计计数，页面空态只是「这一页零字段」，不会触发 `total>0`（别的页有字段），于是「工作室设置」这一页从来没有被真正审计过。
+
+修法两点：清单换成 `/studio/profile`（工作室资料，字段最多）与 `/studio/account`（密码与 MFA），并在每页 audit 之前加一条 `await expect(page.getByText('未找到工作台页面')).toHaveCount(0)`。改完单跑 42.8s 通过，也反证这两个页面的输入框全部有占位提示。
+
+### 本地实际验证
+
+Playwright 真实 Chrome 渠道、单 worker、retries 0，复用 18186/18184 隔离库，未重启/build/typegen。
+
+- T143 单跑 `1 passed (6.3s)`（合计 15.0s）、T144 单跑 `1 passed (3.9s)`、修正后 T141 单跑 `1 passed (42.8s)`。
+- `interface-feedback` + `presales` + `action-placement` 共 **58 项 9.2 分钟 `58 passed`**（含 T143；`interface-feedback.spec.ts` 单文件 5.4 分钟）。
+- Web `tsc --noEmit` 通过；改动文件 `git diff --check` 干净。
+- 间距问题全部先用 DOM 实测（相邻块 `getBoundingClientRect()` 差值）定位再改，避免凭截图猜；改完复测 `/studio/account` 相邻块最小间距从 0 变为 16px，其余页面（profile/content/questionnaire/new/galleries/history/mine）实测无 <10px 的贴合。
+- 不扩称微信/手机真机、真实输入法或生产验收；软键盘弹起时占位文字的遮挡仍未纳入本轮证据。

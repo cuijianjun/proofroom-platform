@@ -226,3 +226,39 @@ test('T107: the disappearing right arrow keeps keyboard focus in the rail withou
 
 
 test('T110: a short pull bounces back without requesting data and reduced motion settles immediately',async({page})=>{const s=await seed(page);await page.goto('/studio?studio='+s.sid);await expect(page.locator('.status-card')).toHaveCount(4);let reads=0;page.on('request',r=>{if(r.method()==='GET'&&r.url().includes('/api/v1/'))reads++;});for(const reduced of [false,true]){await page.emulateMedia({reducedMotion:reduced?'reduce':'no-preference'});const result=await page.evaluate(()=>{window.scrollTo({top:0,behavior:'instant'});const el=document.querySelector<HTMLElement>('#main')!,start=new Touch({identifier:1,target:el,clientX:20,clientY:40}),end=new Touch({identifier:1,target:el,clientX:20,clientY:100});el.dispatchEvent(new TouchEvent('touchstart',{touches:[start],bubbles:true}));el.dispatchEvent(new TouchEvent('touchmove',{touches:[end],bubbles:true,cancelable:true}));el.dispatchEvent(new TouchEvent('touchend',{changedTouches:[end],bubbles:true}));return {animations:el.getAnimations().length};});expect(result.animations).toBe(reduced?0:1);await expect.poll(()=>page.locator('#main').evaluate(el=>el.getAnimations().length)).toBe(0);}expect(reads).toBe(0);});
+
+
+test('T143: empty submission explains every required field in plain words and keeps each hint under its own field',async({page})=>{
+ test.setTimeout(120000);const s=await seed(page);
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/t/'+s.slug);
+  await page.getByRole('button',{name:'提交拍摄咨询',exact:true}).click();
+  await expect(page.getByText('请填写你的称呼',{exact:true})).toBeVisible();
+  await expect(page.getByText('请选择「想拍什么类型的照片」',{exact:true})).toBeVisible();
+  await expect(page.getByText('请填写你的微信号，方便摄影师联系你',{exact:true})).toBeVisible();
+  await expect(page.getByText('请填写 4 位数字访问码',{exact:true})).toBeVisible();
+  await expect(page.locator('.field-error:empty'),`${width} 未出错的项目不该渲染空提示节点`).toHaveCount(0);
+  const order=await page.evaluate(()=>{
+   const hint=[...document.querySelectorAll('.public-question p.hint')].find(p=>p.textContent?.includes('微信用于沟通'));
+   const pin=[...document.querySelectorAll('.public-question label')].find(l=>l.textContent?.includes('项目访问码'));
+   const wechat=document.querySelector('input[aria-label="你的微信号"]');
+   if(!hint||!pin||!wechat)return null;
+   const follows=(a:Element,b:Element)=>(a.compareDocumentPosition(b)&Node.DOCUMENT_POSITION_FOLLOWING)!==0;
+   return {hintAfterWechat:follows(wechat,hint),hintBeforePin:follows(hint,pin)};
+  });
+  expect(order,`${width} 联系方式说明应紧跟微信号输入框`).toEqual({hintAfterWechat:true,hintBeforePin:true});
+ }
+});
+
+test('T144: card copy never touches the first field of the form that follows it',async({page})=>{
+ const s=await seed(page);
+ await page.goto(`/studio/account?studio=${s.sid}`);
+ const card=page.locator('section.card-pad').filter({hasText:'修改密码'});
+ const note=card.locator('p').first(),label=card.getByText('原密码',{exact:true});
+ await expect(label).toBeVisible();
+ for(const width of [390,1280]){
+  await page.setViewportSize({width,height:900});
+  const a=(await note.boundingBox())!,b=(await label.boundingBox())!;
+  expect(b.y-(a.y+a.height),`${width} 说明与首个字段之间应有呼吸空间`).toBeGreaterThanOrEqual(12);
+ }
+});

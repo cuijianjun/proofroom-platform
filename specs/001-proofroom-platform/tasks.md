@@ -221,3 +221,10 @@ M35验收：action-placement 15 项 1.2 分钟全过；delivery + interface-feed
 - [x] T142 未选择的下拉框按占位态弱化字色：空值选项文案由「请选择」变为「请选择你的预算范围」后，字色仍与已选值相同，客户会误以为已选。`Select` 触发按钮加 `data-placeholder`（仅当空值且文案是「请选择…」提示时），配合一条 `.select-trigger[data-placeholder] .select-value{color:var(--color-muted)}`；`value=""` 的真实选项（未分类、无颜色、待核对对应、尚未决定）仍按正常字色。新增同名 T142 在两档宽度比较计算字色并验证选中后撤销占位态
 
 M36验收：T141/T142 单跑 `1 passed (6.5s)` / `1 passed (5.6s)`；`action-placement` 16 项 1.6 分钟全过；presales + galleries + booking-profile 28 项 2.5 分钟全过；此前受影响六 spec 73 项 6.7 分钟 `72 passed`，唯一 failed 为 `account.spec.ts` UI03/AT39（`git stash` 到 HEAD `9d45bd3` 复跑同样失败，判为既有）。root/Web `tsc --noEmit`、`check-architecture.mjs`、`git diff --check` 通过，19 文件 eslint 0 errors / 25 条既有 warning。详见 acceptance.md M36。
+
+## M37 · 真机逐屏走查修掉的三处「代码审查看不出」（2026-11-16）
+根proofroom@agent/proofroom-local-main(3fe7935)，工作区在本批前干净；只动 web 2 个源码文件、2 个 e2e 用例；平台后台接口、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+- [x] T143 必填校验的提示文案改成客户能直接照做的说法，并把联系方式说明归位：空表单提交时原为「请填写怎么称呼你？」「请填写想拍什么类型的照片？」，选择题说「填写」不准确、句尾还挂问号。新增 `requiredMessage(q)`：称呼固定项→「请填写你的称呼」、单选/多选→「请选择「想拍什么类型的照片」」、联系项→「请填写你的微信号，方便摄影师联系你」、其余→「请填写「X」」，访问码另改为「请填写 4 位数字访问码」。同时把「微信用于沟通，四位访问码用于之后的项目访问」从「从哪里知道我们（选填）」上方移到微信号输入框正下方（原位置看着像在解释来源），并让空的 `.field-error` 不再渲染 6 个空节点。`.public-question` 补 `display:flex;flex-direction:column;gap:18px`，修掉「项目访问码（四位数字）」label 紧贴上一条输入框的问题。新增同名 T143 在 390/1440 两档钉住四条错误文案、`.field-error:empty` 计数为 0、以及 hint 与微信号/访问码的文档先后顺序
+- [x] T144 卡片说明段与紧随的表单之间没有间距：`/studio/account` 里「成功后撤销其他设备会话，当前设备重新建立登录。」与下方「原密码」字段贴合（DOM 实测相邻块间距 0）。补一条 `.card-pad > p + form{margin-top:1rem}`，让「先说明后表单」的卡片统一留出呼吸空间。新增同名 T144 在两档宽度量说明段底部到首个字段顶部的距离 ≥12px。顺带修正 T141 里写错的 `/studio/settings`（该路由不存在，实际渲染「未找到工作台页面」空态，等于「工作室设置」从未被审计）：改为真实路由 `/studio/profile` 与 `/studio/account`，并在每页 audit 前断言页面上不存在「未找到工作台页面」，防止路由写错时零字段静默通过
+
+M37验收：T143 单跑 `1 passed (6.3s)`，T144 单跑 `1 passed (3.9s)`，修正后 T141 单跑 `1 passed (42.8s)`；`interface-feedback` + `presales` + `action-placement` 共 58 项 9.2 分钟 `58 passed`（含 T143）。详见 acceptance.md M37。
