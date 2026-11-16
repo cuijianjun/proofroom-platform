@@ -21,3 +21,6 @@ export async function chooseSlot(group:Locator,choice:string|{index:number}){
  const choices=[...rows.filter(r=>r.value===''),...rows.filter(r=>r.value!==''&&!r.disabled)],value=typeof choice==='string'?rows.find(r=>r.value===choice||choice!==''&&r.value.split(':')[0]===choice)?.value:choices[choice.index]?.value;
  expect(value,'the requested appointment is present').toBeDefined();const item=sheet.locator(`button[data-slot-value=${JSON.stringify(value)}]`);if(value){const day=await item.getAttribute('data-slot-day');await sheet.locator(`button[data-date=${JSON.stringify(day)}]`).click();}await expect(item).toBeEnabled();await item.click();await expect(item).toHaveAttribute('aria-pressed','true');await sheet.getByRole('button',{name:'确认选择',exact:true}).click();await expect(sheet).not.toBeVisible();await expect(group).toHaveAttribute('data-selected-slot',value!);
 }
+
+// Open a contextual disclosure through the same trigger available to the user.
+export async function openActions(trigger:Locator){const details=trigger.locator('xpath=parent::details');if(!await details.evaluate(el=>(el as HTMLDetailsElement).open))await trigger.click();await expect(details).toHaveAttribute('open','');}

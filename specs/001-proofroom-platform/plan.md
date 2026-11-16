@@ -127,3 +127,37 @@ API保护请求401/403/404触发会话重校验，不在每个正常路由重置
 桌面公开页可读正文+粘性计划摘要，摄影师端保侧栏、顶部只有模块标题/路径与身份，无独立返回按钮，层级使用路径或列表返回；手机公开页紧凑身份、可识别tab、两列作品、单列咨询/底部主操作，摄影师示意保手机导航。空分类、无时段/读错、选满、未填错误、复制失败、取消与演示成功有明确文案；焦点、44px触区、Escape/返回/键盘导航可用。
 
 原型仅内存演示，不接API、不创建真实咨询/订单、不占档，不保存访问码，图片/套餐为示例。一次交付一个方向及原型说明，正常/长内容模式可切换；桌面/手机均用同一HTML响应。确认后才进入T102，不因原型检查通过自动实施。
+
+
+## M23 Apple产品体验打磨（2026-11-15）
+用户已明确直接修改正式18186应用。目标：客户/摄影师/Owner的当前可用功能操作更短、状态可见，手机/电脑分别适配；保登录/数据/技术栈与全部已有入口。平台后台原代码、布局/样式和交互保持；全功能合并方案缺口仍单独待实施，D07配额冲突不在本批固化。
+绝对根 /Users/cjjxw/codex/摄影选片平台/proofroom，agent/proofroom-local-main@a3873eb。主Agent写apps/web外部产品界面、tests/e2e现有文件及本spec/交接；不动API/domain/DB/upstream/原WorkBuddy/真实业务数据、不收费发信、不提交推送部署。固定Node22.22.2，复用QA18186/18184，仅新隔离工作室写测，不覆盖既有体验数据/秘密state。新共享产品motion上下文文件apps/web/src/components/ui/product-experience.tsx供正式复用；CSS沿用globals.css但全部新规则限定产品wrapper，不影响平台。临时证据/tmp/proofroom-qa/apple-experience可清理。
+布局：任务优先、主次操作清楚、长文按需展开、可辨tab/选中照片/缺失项。保暖色品牌+系统字体，避免堆叠巨型卡片/冗余文字。桌面侧栏无独立后退，移动胶囊/底tab/安全区，保44px触区/键盘焦点。
+动效：复用apple-product-design motion-primitives语义；选中指示可观察中间位置、快速切换取消旧动画；弹层专属surface进退，退出前保dialog语义/inert、反向可中断、关闭后恢复有效焦点；按压不缩小触区。reduced-motion静态直达，运行中切偏好立即收敛。异步成功必须服务端确认；失败保输入/原地重试；IME组合Enter不提交或切换。
+ui-ux-pro-max搜索为建议：错误播报适用，主操作查询无直接命中；Nextjs ServerActions建议与分离API冲突，不采用。既有测试工具实际渲染并按Impeccable手册检查，不安装引擎。增量：公开页/选片/下载/导航/共享弹层附近回归、平台样式前后基线、tsc(不并发typegen/build)/lint/architecture；仅本地浏览器，不扩称真机/VoiceOver/原生系统文件窗口验收。
+
+
+## M24 客户页布局、横向导航与页面手势
+授权范围沿用正式18186外部产品UI，平台后台不动。最新用户约束按顺序合并：全部隐藏横向浏览器滚动条；横向导航只在右侧有可点击箭头，到最右消失，移除前保键盘焦点；分类/状态/日期栏上滑吸顶，手机避开62px顶栏、弹层限定自身scroll容器。作品与套餐FAQ同form排在全部问题后/意向套餐前，删聊聊/继续填写和重复分类名；浏览模块在禁用fieldset之外，所有非提交动作type=button，保原参考选择/套餐权限/草稿。项目过滤两按钮移除，状态/排序onChange即时URL/API过滤、搜索Enter；预览/更多进项目Header，长名两行可展开，危险命令保持原确认。
+视频参考10秒本地录屏：4s下拉、5s松手、7s归位，双点等待。GET registry刷新各当前资源；用Promise等待真实响应，失败保数据/重试，命令/上传忙时不触发。公客/登录不把staff auth加入刷新成功判定；不重建外壳/表单，main padding+可取消回弹避免transform破坏fixed下载栏。reduce取消非必要动画，route-key清理动作/资源卸载结束等待，不重放POST/PUT。列表以原cursor命令自动上滑加载，保按钮重试、错误停止自动重读、结束小图标。无分页数据页只刷新，不请求虚构的下一页。
+公开cfg：未编辑时安全应用新发布内容/开放状态；有草稿/恢复/未知提交时保问卷/内容/作品快照和原文/PIN，profile/权限/时段可更新，版本变动走既有明确核对迁移，不能GET成功但永远显示旧数据。图像与顾客数据不改，回归只新隔离工作室。T107–112实施、增量/实际手机电脑渲染/独审和验收记录闭环，临时m24-*沿用/tmp/proofroom-qa/apple-experience。
+
+
+## M25 · 操作入口分层契约
+常用入口在所在内容标题/项目身份卡/照片主操作栏；低频刷新、复制配置、导出、删除/权限变更进就近“更多”。直接保留保存/提交/上传/当前异常重试、必要筛选、客户联系及主下载，不把所有按钮机械折叠。设置页中的表单字段/保存/取消保持原流程；“我的”现有分组与导航保留。
+复用现有native details披露与Button/Confirm，统一44px触达和外侧点击/Escape关闭；使用普通链接/按钮Tab顺序，不冒充ARIA menu。动作选中后关闭并将焦点放回披露按钮，让后续Dialog退出回到有意义的入口；表单中的搜索/筛选操作保留披露，避免焦点丢失。剪贴板失败允许手动复制，返回可见更多触发器。窄屏面板限视口宽高，不挤压主任务；平台作用域不启用。
+实现仅apps/web外部组件与tests/e2e/action-placement.spec.ts及既有受影响断言；主Agent实施，foundation_review只读非实现者复核。固定Node22，Playwright复用18186、只新隔离数据；类型/lint/架构与受影响用例合并执行，不并发Next build/typegen。临时证据/tmp/proofroom-qa/apple-experience/m25-*；不打印私密体验state，不提交/部署。
+
+M25后续明确要求：项目搜索隐藏可见label但保可访问名称，放大镜即提交、Enter与IME边界保留；三排序横向即时筛选，状态与排序联合吸顶。产品手机More采用底部动作面板，Select采用底部选择层+遮罩/取消，电脑仍原桌面形态，平台不启用。Vant官方参考 https://raw.githubusercontent.com/youzan/vant/main/packages/vant/src/action-sheet/README.zh-CN.md 与 search/README.zh-CN.md（只参交互，不引入Vue/Vant依赖）。portal必须继承原fieldset禁用且保取消；选择层打开后只读须收起/解锁/返焦。箭头可见图标16px/触达44px，末端160ms淡出缩小并立即停用，reduce归位；套餐问答顶部留白28px，原分隔层级保留。
+
+
+## M26 · 胶囊入口契约
+手机胶囊可视88×32，外层88×44、按钮各44×44（伪元素绘制胶囊，不扩大触区）；图标18。快捷面板沿用Dialog底部动作层，待处理项目/拍摄日程导航仍经现有navigate草稿守卫，复制使用既有CopyText立即复制及失败回退。导航前同步关闭快捷modal并返焦胶囊，防止后续离开确认返焦隐藏动作；取消/背景/Escape保动画。原工作室选择/新建Dialog与命令不改，从Mine团队账号分组唯一工作室管理行触发，电脑保侧栏；身份清理或断点变化关闭快捷面板。原功能/登录/数据/规则保留，平台不启用。用现有action-placement/interface-feedback/booking-profile/spa-navigation增量，不扩全量；临时m26-*可清理。
+
+
+## M27 · 复制反馈契约
+复用ToastProvider新增单一复制提示通道，顶部居中、深棕灰白字勾图标、非阻塞、1.8秒进退/reduce；最近一次用户复制意图拥有反馈，只有clipboard确认成功才提示。优先使用复制源所在的native dialog承载提示，避免普通页面层落在modal后；关闭宿主清提示。共享CopyText产品范围移除copy-feedback文本，保按钮成功图标、原复制内容及失败手动复制；平台仍原样。照片文件名自定义复制接入同通道，CSV下载反馈保原行为。取消/换源/卸载或面板结束后的迟到回执不弹新UI，复制失败不出现成功Toast。不持久化剪贴板原文/链接到提示或日志，不新增依赖。现有action-placement/interface-feedback/selection/booking-profile增量；临时/tmp/proofroom-qa/apple-experience/m27-*验收后可清理。
+
+
+### M28 长名称行内展开（2026-11-16）
+只统一名称披露交互：在名称末尾显示18px下箭头/44px触区，展开为上箭头；保完整名称、heading可访问名、原两行折叠与短名无按钮。共享NameDisclosure复用现有product-experience文件，使用button type=button、aria-expanded/controls；正文/问答展开、工作室切换、预览及所有业务功能不变。作用域apps/web外部产品、受影响e2e与现有spec/交接；固定Node22、复用QA18186，只隔离fixture写测，不改体验数据/平台/API/DB，不重启/commit/push/deploy。验收T126–127：320/390/1440布局、键盘/焦点/减少动态、名称原文/草稿保留且浏览不产生业务写入。
