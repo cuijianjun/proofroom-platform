@@ -81,7 +81,7 @@ test('T135: pages rely on pull-to-refresh instead of a manual refresh entry, and
   {path:'inquiries',primary:null},
   {path:'galleries',primary:'创建或进入图库'},
   {path:'schedule',primary:'新增可约时段'},
-  {path:'history',primary:'搜索历史'},
+  {path:'history',primary:null},
   {path:'help',primary:'创建工作室加密备份'}
  ];
  for(const width of [320,1440]){
@@ -179,7 +179,7 @@ test('T119/120: mobile search and horizontal sort keep conditions and IME intent
  const search=page.getByLabel('搜索项目',{exact:true});await search.fill('入口');
  await search.dispatchEvent('compositionstart');await search.press('Enter');await page.waitForTimeout(100);expect(reads).toBe(0);
  await search.dispatchEvent('compositionend');await page.evaluate(()=>new Promise(requestAnimationFrame));
- await page.getByRole('button',{name:'执行项目搜索',exact:true}).click();await expect(page).toHaveURL(/q=%E5%85%A5%E5%8F%A3/);
+ await search.press('Enter');await expect(page).toHaveURL(/q=%E5%85%A5%E5%8F%A3/);
  const sorts=page.getByRole('group',{name:'项目排序',exact:true});await expect(page.getByRole('combobox',{name:'项目排序',exact:true})).toHaveCount(0);
  await sorts.getByRole('button',{name:'最早创建优先',exact:true}).click();await expect(page).toHaveURL(/sort=oldest/);await expect(search).toHaveValue('入口');
  await sorts.getByRole('button',{name:'最近预约优先',exact:true}).focus();await page.keyboard.press('Enter');await expect(sorts.getByRole('button',{name:'最近预约优先',exact:true})).toHaveAttribute('aria-pressed','true');

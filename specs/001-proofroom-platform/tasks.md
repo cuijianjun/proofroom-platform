@@ -232,3 +232,13 @@ M37验收：T143 单跑 `1 passed (6.3s)`，T144 单跑 `1 passed (3.9s)`，修�
 ### M38 · 补完剩余路由走查 + 手机端保存条让开底部导航（2026-11-16）
 
 T145 完成。M37 之后把 `/`、`/studio/login`、`/studio/register`、`/studio/portfolio`、`/studio/members`、`/c/<token>`、`/invite/<token>` 也逐屏看完，覆盖 application.tsx 全部路由分支。新发现并修复一处：移动端 `.save-bar` 的 `bottom:calc(82px + safe-area)` 只让开导航本体，导航中间凸起的「新建」圆钮仍压在保存条上，改为 `104px`；该值改的是 `globals.css` 第 183 行既有覆写，不是新增规则。新增 T145（三个滚动位置断言保存条下沿 ≤ 导航顶边 - 24px），并用旧值 82px 反向验证会失败。详见 acceptance.md M38。
+
+### M39 · 搜索收进框内 + 切筛选不再整页闪（2026-11-16）
+
+根proofroom@agent/proofroom-local-main(8f6206f)，工作区在本批前干净；只动外部产品 11 个 web 源码文件与 5 个 e2e 用例；平台后台接口、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+
+- [x] T146 搜索入口从「框旁边的独立按钮」改成「框内左侧放大镜」，回车与手机键盘搜索键都能提交：`components/ui/search-input.tsx` 重写为 `SearchBox`（`<div class="search-box">` 内一个 `type="submit"` 圆形放大镜按钮 + `type="search"`、`enterKeyHint="search"` 的输入框），依赖外层 form 的 `onSubmit` 提交，因此项目列表、选片清单/原片浏览、图库列表、图库照片、新建图库弹窗「查找已有项目」、历史、平台工作人员共 7 处调用点全部改包 `form`；输入法组词中的回车用 `compositionstart/end` 拦住，不当成提交。随之删掉「搜索照片 / 查找图库 / 搜索图库照片 / 查找项目 / 搜索历史 / 查找工作人员」6 个独立按钮，按钮 `aria-label` 用独立的「提交搜索」，避免和输入框的可访问名撞车。用例侧：`interface-feedback` T080 去掉旧按钮断言、新增同名 T146，在三段页面（项目列表、图库列表、历史）钉住几何与语义——放大镜在输入框内、按钮右沿不越过输入框左内边距、`type=search`/`enterKeyHint=search`、表单里只有一个 `submit`、不再有以「搜索/查找」开头的独立按钮、按钮无障碍名为「提交搜索」；提交路径同时验证回车与点放大镜（`q` 同步、空态标题、`scrollWidth ≤ 390`）。`action-placement` T135 的 `history` 主操作置空、T119/120 与 `galleries`、`platform` 的点击改回车
+- [x] T147 切筛选/勾选时整页闪动：`useResource` 在 `url` 变化时把 `data` 置空并 `loading=true`，导致汇总块、筛选栏、列表整块消失再出现。列表页改为「有新数据用新数据、没有就先用上一份行」：`useCursorWindow` 增加按页面共享的 `families` 缓存（`clearListWindows` 一并清空、超 20 条淘汰），切筛选先用上一份行；`photos` / `galleries` / `history` / `inquiries` / `delivery` / `downloads` / `platform` 的 `Loading`/`ListSkeleton` 全部收敛成「只在还没有任何数据时才显示」，选片清单的 `canEdit`/汇总改用 snapshot 兜底。新增同名 T147：用逐帧采样断言切「只看当前已选」与切图库分类下拉时，汇总块/筛选栏/列表都没有从 DOM 消失（`goneSummary/goneForm/goneGrid` 均为 0、行数始终 > 0）
+- [x] T148 顺带修掉 `platform.spec.ts` 的既有红：另一标签页登录后平台页靠 BroadcastChannel 重新校验账号，无头浏览器里后台页的消息会滞后，改为先 `bringToFront()` 再给 800ms 沉淀；该用例在 HEAD `8f6206f` 上 `git stash` 复跑同样失败（`1 failed`），确认与本轮搜索/闪动改动无关，且单跑 3 次稳定通过
+
+M39验收：`platform` + `galleries` + `action-placement` 共 23 项 7.9 分钟 `23 passed`；`interface-feedback` 全量见 acceptance.md M39。root/Web `tsc --noEmit`、改动文件 eslint（0 errors）、`git diff --check` 通过。详见 acceptance.md M39。

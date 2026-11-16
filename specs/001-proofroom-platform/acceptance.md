@@ -510,3 +510,52 @@ for(const y of [0,400,900]){
 - `interface-feedback` + `presales` + `booking-profile` + `selection` 回归见提交说明。
 - 全部路由实测 `document.scrollWidth === innerWidth`（390 宽），无横向溢出；无 <11px 正文字号（`.eyebrow` 10px 为既有设计）。
 - 未纳入本轮证据：桌面宽度逐页截图（仅用 1440/1280 做了间距与文案断言）、软键盘弹起时的遮挡、iOS Safari 安全区实机。
+
+## M39 · 搜索收进框内 + 切筛选不再整页闪（2026-11-16）
+
+### 搜索框：一个框、一个框内按钮、三条提交路径
+
+`components/ui/search-input.tsx` 里 `SearchBox` 的结构就是一个 `.search-box` 容器包着「圆形放大镜 `type="submit"` 按钮」+「`type="search"` 输入框」。提交走外层 `form` 的 `onSubmit`，所以三条路径天然统一：点框内放大镜、桌面按 Enter、手机键盘右下角「搜索」（`enterKeyHint="search"` 决定这个键长什么样）。
+
+几何与语义由 T146 在三段页面（`/studio/projects`、`/studio/galleries`、`/studio/history`）实测钉住：
+
+```ts
+expect(geo.inside,'放大镜应在输入框内部左侧').toBe(true);
+expect(geo.buttonRight,'放大镜只占内边距区域，不压住输入文字').toBeLessThanOrEqual(geo.padLeft);
+expect(geo.type).toBe('search'); expect(geo.enterKeyHint).toBe('search');
+expect(geo.submits,'搜索表单只有框内这一个提交按钮').toEqual([true]);
+expect(geo.texts.filter(t=>/^(搜索|查找)/.test(t)),'不再有需要点击的独立搜索按钮').toEqual([]);
+expect(geo.label,'按钮的无障碍名不应含字段名，否则会和输入框标签混淆').toBe('提交搜索');
+```
+
+`buttonRight ≤ padLeft` 这条是关键：放大镜是绝对定位盖在输入框上的，只有它的右沿不越过输入框的左内边距（`padding-left:46px`），文字才不会被压住。实测 `.search-box` 358×44（390 视口）、按钮 `left:5px` / 36×36。
+
+提交路径两侧都验：`fill('界面') + Enter` 与 `fill('不存在的项目名称') + 点放大镜`，都断言 `?q=` 同步、空态标题「暂无符合条件的项目」、`scrollWidth ≤ 390`。
+
+### 闪动：先在旧行上等，不要先清空
+
+根因是 `useResource` 在 `url` 变化那一刻就把 `data` 置 `null` 并 `loading=true`，于是切筛选时汇总块、筛选栏、列表整块消失再出现。改法是「有新数据用新数据，没有就继续用上一份行」：`useCursorWindow` 加了按页面共享的 `families` 缓存（`clearListWindows` 一并清空、超 20 条淘汰），切换时先用上一份行；各页 `Loading`/`ListSkeleton` 一律收敛为「只在还没有任何数据时才显示」。
+
+T147 用逐帧采样（`requestAnimationFrame` 循环 1200ms）而不是「点完看一眼」，因为闪动只有 1–2 帧：
+
+```ts
+// 切「只看当前已选」
+expect({goneSummary,goneForm,goneGrid}).toEqual({goneSummary:0,goneForm:0,goneGrid:0});
+expect(minRows).toBeGreaterThan(0);   // 行数全程 > 0，不存在空列表中间态
+// 切图库分类下拉（自定义 combobox + portal listbox，不能用 selectOption）
+expect(chosen).toBe(true);            // 选项真的被点中
+expect({goneForm,goneCards}).toEqual({goneForm:0,goneCards:0});
+```
+
+### 顺带修掉的既有红：`platform.spec.ts` UI34/UX05
+
+另一标签页登录后，平台页靠 `BroadcastChannel('proofroom-staff-auth')` 收到 `login` 再重新校验账号。无头浏览器里后台标签页的消息会滞后，断言 12s 内等不到换号后的文案。先把平台页切回前台再给 800ms 沉淀，单跑 3 次稳定通过。
+
+这不是本轮引入的：`git stash` 掉 M39 全部改动、回到 HEAD `8f6206f` 复跑同一条，同样 `1 failed`（页面仍停在「当前平台账号：平台工作人员 · …」，弹窗也还开着）。因此按既有红处理，只改用例的等待方式，不改产品行为。
+
+### 本地实际验证
+
+- `platform` + `galleries` + `action-placement` 共 23 项 7.9 分钟全过（`23 passed`）。
+- `interface-feedback` 全量 38 项见提交说明；T146/T147 单跑均通过。
+- Web `tsc --noEmit`、改动文件 eslint（0 errors，仅既有 `react-hooks/set-state-in-effect` 与 `no-img-element` 警告）、`git diff --check` 通过。
+- 未纳入本轮证据：iOS Safari 真机软键盘图标（用 `enterKeyHint=search` 的语义断言替代）、搜索建议/联想（产品未要求）。

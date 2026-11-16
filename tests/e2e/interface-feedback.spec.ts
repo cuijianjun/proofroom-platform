@@ -25,7 +25,10 @@ test('T079: project entry opens the pending task and keeps future bookings, canc
 test('T080: customer sees photos first on narrow screens and every auxiliary tool remains reachable',async({page})=>{
  const s=await seed(page),p=await project(page,s.sid),base=`/api/v1/studios/${s.sid}/projects/${p.id}`,file=await sharp({create:{width:80,height:60,channels:3,background:'orange'}}).jpeg().toBuffer(),batch=await data(await page.request.post(base+'/upload-batches',{headers,data:{key:randomUUID(),role:'original',files:[{filename:'first.jpg',bytes:file.length,sha256:createHash('sha256').update(file).digest('hex')}]}}));for(const item of batch.items)expect((await page.request.put(`${base}/upload-batches/${batch.id}/items/${item.id}/bytes`,{headers:{...headers,'content-type':'application/octet-stream','x-upload-grant':item.uploadGrant},data:file})).ok()).toBe(true);await expect.poll(async()=>(await data(await page.request.get(base+'/upload-batches/'+batch.id))).state).toBe('ready');const token=p.clientLink.split('/').pop();await data(await page.request.post(`/api/v1/client/${token}/pin`,{headers,data:{pin:'4826'}}));await page.route(`**/api/v1/client/${token}`,async route=>{const response=await route.fetch(),body=await response.json();body.data.project.title='很长的摄影项目名称'.repeat(10);await route.fulfill({response,json:body});});await page.goto(p.clientLink);await expect(page.locator('.project-photo')).toHaveCount(1);
  for(const width of [320,390,393,1280]){await page.setViewportSize({width,height:852});await expect(page.getByRole('button',{name:'导出已选CSV',exact:true})).toBeHidden();expect((await page.locator('.project-photo').first().boundingBox())!.y).toBeLessThan(650);expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);}
- await openActions(page.getByTitle('更多照片操作',{exact:true}));for(const label of ['切换列表','读取最新照片','搜索照片','导出已选CSV','复制已选文件名'])await expect(page.getByRole('button',{name:label,exact:true})).toBeVisible();await page.getByRole('button',{name:'展开完整名称',exact:true}).click();await expect(page.getByRole('button',{name:'收起名称',exact:true})).toBeVisible();
+ await openActions(page.getByTitle('更多照片操作',{exact:true}));for(const label of ['切换列表','读取最新照片','导出已选CSV','复制已选文件名'])await expect(page.getByRole('button',{name:label,exact:true})).toBeVisible();
+ // 搜索改为框内放大镜后，菜单里给的是输入框本身，不再有独立的「搜索照片」按钮
+ await expect(page.getByLabel('搜索照片文件名',{exact:true})).toBeVisible();
+ await expect(page.getByRole('button',{name:'搜索照片',exact:true})).toHaveCount(0);await page.getByRole('button',{name:'展开完整名称',exact:true}).click();await expect(page.getByRole('button',{name:'收起名称',exact:true})).toBeVisible();
 });
 
 test('T081: customer download has one primary action, starts once, survives refresh and still checks authorization',async({page})=>{
@@ -275,4 +278,110 @@ test('T145: 手机端保存条完整露出，不被底部导航与凸起的「�
   const b=(await bar.boundingBox())!,n=(await page.locator('.mobile-nav').boundingBox())!;
   expect(b.y+b.height,`y=${y} 保存条下沿压到底部导航（含凸起的新建按钮）`).toBeLessThanOrEqual(n.y-24);
  }
+});
+
+// 搜索统一：放大镜在输入框内部左侧，回车 / 手机键盘搜索键 / 点放大镜都能提交，
+// 因此页面上不该再摆一个独立的「搜索照片」「查找图库」按钮。T146 同时锁住几何与提交路径。
+async function uploadShots(page:Page,sid:string,projectId:string,names:string[]){
+ const base=`/api/v1/studios/${sid}/projects/${projectId}`,buffers:Buffer[]=[];
+ for(const _ of names)buffers.push(await sharp({create:{width:60,height:40,channels:3,background:'#d6b798'}}).jpeg().toBuffer());
+ const batch=await data(await page.request.post(base+'/upload-batches',{headers,data:{key:randomUUID(),role:'original',files:names.map((n,i)=>({filename:n,bytes:buffers[i].length,sha256:createHash('sha256').update(buffers[i]).digest('hex')}))}}));
+ for(const [i,item] of batch.items.entries())expect((await page.request.put(`${base}/upload-batches/${batch.id}/items/${item.id}/bytes`,{headers:{...headers,'content-type':'application/octet-stream','x-upload-grant':item.uploadGrant},data:buffers[i]})).ok()).toBe(true);
+ await expect.poll(async()=>(await data(await page.request.get(base+'/upload-batches/'+batch.id))).state).toBe('ready');
+ return data(await page.request.get(base+'/photos?role=original'));
+}
+async function markFirst(page:Page,sid:string,projectId:string,photos:{items:{id:string;version:number}[];summary:{selectionVersion:number}}){
+ const base=`/api/v1/studios/${sid}/projects/${projectId}`,first=photos.items[0];
+ expect((await page.request.post(`${base}/photos/${first.id}/mark`,{headers,data:{key:randomUUID(),version:first.version,selectionVersion:photos.summary.selectionVersion,mark:{action:'toggle',on:true}}})).status()).toBe(200);
+}
+
+test('T146: 搜索框内的放大镜与 Enter 都能提交，页面上不再有独立的搜索按钮',async({page})=>{
+ const s=await seed(page);await project(page,s.sid);
+ const geometry=async(scope:string)=>{
+  const box=page.locator(scope).first();
+  await expect(box).toBeVisible();
+  const geo=await box.evaluate(w=>{
+   const button=w.querySelector('button')!,input=w.querySelector('input')!,wrap=w.getBoundingClientRect(),br=button.getBoundingClientRect(),form=w.closest('form');
+   return {inside:w.contains(button),buttonRight:Math.round(br.right-wrap.left),padLeft:Math.round(parseFloat(getComputedStyle(input).paddingLeft)),type:input.type,enterKeyHint:input.getAttribute('enterkeyhint'),submits:form?[...form.querySelectorAll('button[type=submit]')].map(b=>b.closest('.search-box')===w):[],texts:form?[...form.querySelectorAll('button')].map(b=>b.textContent?.trim()??''):[],label:button.getAttribute('aria-label')??''};
+  });
+  expect(geo.inside,'放大镜应在输入框内部左侧').toBe(true);
+  expect(geo.buttonRight,'放大镜只占内边距区域，不压住输入文字').toBeLessThanOrEqual(geo.padLeft);
+  expect(geo.type).toBe('search');
+  expect(geo.enterKeyHint).toBe('search');
+  expect(geo.submits,'搜索表单只有框内这一个提交按钮').toEqual([true]);
+  expect(geo.texts.filter(t=>/^(搜索|查找)/.test(t)),'不再有需要点击的独立搜索按钮').toEqual([]);
+  expect(geo.label,'按钮的无障碍名不应含字段名，否则会和输入框标签混淆').toBe('提交搜索');
+ };
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(`/studio/projects?studio=${s.sid}`);await geometry('form.project-search .search-box');
+ await page.goto(`/studio/galleries?studio=${s.sid}`);await geometry('form.list-filters .search-box');
+ await page.goto(`/studio/history?studio=${s.sid}`);await expect(page.locator('#history-search')).toHaveCount(1);await geometry('form.list-filters .search-box');
+ await expect(page.getByRole('button',{name:'搜索历史',exact:true})).toHaveCount(0);
+
+ // 回车提交
+ await page.goto(`/studio/projects?studio=${s.sid}`);
+ const input=page.locator('form.project-search .search-box input');
+ await expect(page.locator('.project-card')).toHaveCount(1);
+ await input.fill('界面');await input.press('Enter');
+ await expect.poll(()=>new URL(page.url()).searchParams.get('q')).toBe('界面');
+ await expect(page.locator('.project-card')).toHaveCount(1);
+ // 点框内放大镜提交
+ await input.fill('不存在的项目名称');
+ await page.locator('form.project-search .search-box button').click();
+ await expect.poll(()=>new URL(page.url()).searchParams.get('q')).toBe('不存在的项目名称');
+ await expect(page.locator('.project-card')).toHaveCount(0);
+ await expect(page.locator('section.empty').getByRole('heading',{name:'暂无符合条件的项目',exact:true})).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('T147: 切换筛选时汇总块、筛选栏与列表不整块消失',async({page})=>{
+ const s=await seed(page),p=await project(page,s.sid);
+ await markFirst(page,s.sid,p.id,await uploadShots(page,s.sid,p.id,['alpha-01.jpg','beta-02.jpg']));
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(`/studio/projects/${p.id}?studio=${s.sid}&section=originals`);
+ // 每个页面只挂一个照片区块：默认是「选片清单」（只列已选），原片浏览才是全部原片
+ const section=page.locator('section.photo-manager').first();
+ await expect(section.locator('.section-heading h2')).toHaveText('原片浏览');
+ await expect(section.locator('.project-photo')).toHaveCount(2);
+
+ // 勾选「只看当前已选」：每秒 60 帧采样，任何一帧缺块都算闪动
+ const toggle=await section.evaluate(async el=>{
+  const label=[...el.querySelectorAll('.check-line')].find(l=>l.textContent?.includes('只看当前已选')) as HTMLElement|undefined;
+  if(!label)return null;
+  const box=label.querySelector('input')!,rows:number[]=[];
+  let frames=0,goneSummary=0,goneForm=0,goneGrid=0;const t0=performance.now();
+  box.click();
+  await new Promise<void>(resolve=>{const tick=()=>{frames++;if(!document.querySelector('.selection-summary'))goneSummary++;if(!el.querySelector('form.list-filters'))goneForm++;if(!el.querySelector('.project-photo-grid,.project-photo-list'))goneGrid++;rows.push(el.querySelectorAll('.project-photo').length);if(performance.now()-t0<1200)requestAnimationFrame(tick);else resolve();};requestAnimationFrame(tick);});
+  return {frames,goneSummary,goneForm,goneGrid,minRows:Math.min(...rows),maxRows:Math.max(...rows)};
+ });
+ expect(toggle).not.toBeNull();
+ expect(toggle!.frames).toBeGreaterThan(20);
+ expect(toggle!.goneSummary,'汇总块在切换时被卸载').toBe(0);
+ expect(toggle!.goneForm,'筛选栏在切换时被卸载').toBe(0);
+ expect(toggle!.goneGrid,'照片网格在切换时被卸载').toBe(0);
+ expect(toggle!.minRows).toBeGreaterThan(0);
+
+ // 图库列表切「图库类别」下拉：筛选栏与卡片容器同样不消失
+ await page.goto(`/studio/galleries?studio=${s.sid}`);
+ await expect(page.locator('form.list-filters')).toHaveCount(1);
+ const switching=await page.evaluate(async()=>{
+  let frames=0,goneForm=0,goneCards=0,chosen=false;const t0=performance.now();
+  (document.querySelector('#gallery-kind') as HTMLElement).click();
+  await new Promise<void>(resolve=>{const tick=()=>{
+   frames++;
+   if(!document.querySelector('form.list-filters'))goneForm++;
+   if(!document.querySelector('.project-cards'))goneCards++;
+   if(!chosen){
+    const list=document.querySelector('[role="listbox"]');
+    const option=list?[...list.querySelectorAll('[role="option"]')].find(o=>o.textContent?.trim()==='原片'):null;
+    if(option){chosen=true;(option as HTMLElement).dispatchEvent(new MouseEvent('click',{bubbles:true}));}
+   }
+   if(performance.now()-t0<1200)requestAnimationFrame(tick);else resolve();
+  };requestAnimationFrame(tick);});
+  return {frames,chosen,goneForm,goneCards};
+ });
+ expect(switching.chosen,'已在下拉里选中「原片」').toBe(true);
+ expect(switching.frames).toBeGreaterThan(20);
+ expect(switching.goneForm,'筛选栏在切下拉时被卸载').toBe(0);
+ expect(switching.goneCards,'图库卡片容器在切下拉时被卸载').toBe(0);
 });

@@ -451,6 +451,8 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
  [data-product-ui] .page-title{gap:12px;flex-direction:row;align-items:center}
  [data-product-ui] .page-title>div{min-width:0}
  [data-product-ui] .page-title>button{flex-shrink:0;font-size:13px;padding-inline:10px}
+ [data-product-ui] .page-title>.action-toolbar{flex-shrink:0}
+ [data-product-ui] .page-title>.action-toolbar>button{font-size:13px;padding-inline:12px;white-space:nowrap}
  [data-product-ui] .dashboard-actions{gap:12px}
  [data-product-ui] .dashboard-actions>a{padding:18px 14px;grid-template-columns:minmax(0,1fr) auto;gap:10px}
  [data-product-ui] .dashboard-actions>a>svg{grid-column:1}
@@ -619,8 +621,8 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
 [data-product-ui] .mobile-action-sheet .dialog-heading h2{font-size:15px;color:var(--color-muted);font-weight:500}
 
 [data-product-ui] .project-search{position:relative;margin:18px 0 10px;width:100%}
-[data-product-ui] .project-search .input{width:100%;min-height:48px;padding-right:54px;border-radius:24px;background:var(--color-surface)}
-[data-product-ui] .project-search-submit{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:44px;height:44px;border-radius:50%;color:var(--color-muted)}
+[data-product-ui] .project-search .search-box-input{width:100%;min-height:48px;padding:0 16px 0 48px;border-radius:24px;background:var(--color-surface)}
+[data-product-ui] .project-search .search-box-submit{left:6px;width:38px;height:38px}
 [data-product-ui] .project-list-controls{position:sticky;top:var(--product-sticky-top,0px);z-index:12;background:var(--color-app);padding-bottom:8px}
 [data-product-ui] .project-list-controls>.horizontal-rail{position:relative;top:auto;margin-block:4px}
 [data-product-ui] .project-sort-chips{display:flex;align-items:center;gap:8px;overflow-x:auto;min-width:0;scrollbar-width:none;padding-block:4px}
@@ -781,3 +783,12 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
  [data-product-ui] summary::after,[data-product-ui] .quota-step{transition:none}
  [data-product-ui] .quota-step:active:not(:disabled){transform:none}
 }
+
+/* M39: one search box everywhere — the magnifier sits inside the field on the left. */
+.search-box{position:relative;width:100%;min-width:0}
+.search-box .search-box-input{width:100%;padding-left:46px}
+.search-box-submit{position:absolute;left:5px;top:50%;transform:translateY(-50%);display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:var(--color-muted);background:transparent;transition:color .16s ease,background-color .16s ease}
+.search-box-submit:hover{color:var(--color-pine);background:var(--color-surface-2)}
+.search-box-submit:focus-visible{color:var(--color-pine);outline:2px solid var(--color-pine);outline-offset:-2px}
+.search-box-input::-webkit-search-cancel-button{cursor:pointer}
+@media(prefers-reduced-motion:reduce){.search-box-submit{transition:none}}
