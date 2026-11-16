@@ -198,10 +198,11 @@ T132完成。承接M30遗留的 `browserContext.newPage: Target crashed`，用�
 | T099 触区断言 | 44px 触区在 DIP 下算成 43.99997，高度断言取 `>=44` 会假失败（宽度侧早已按 43.5 口径） | 高度断言与宽度同口径，改 43.5 并注明亚像素原因 | 四项宽度均通过 |
 | T050 下载流程 | 用例仍按合并前两步流程（准备全部照片ZIP→下载全部照片ZIP），当前主卡是"下载全部照片"单击直下 | 改为单击主卡按钮、`waitForEvent('download')` 给 120s | 5 个文件哈希与源文件逐一相等 |
 | 布局越界断言 | `inspect()` 把横向滑动条内的标签和被 ellipsis 有意裁切的元素也报成越界 | 只报"看得见的越界"：祖先可横向滚动或自身 `overflow-x≠visible` 时不计 | 320/390/393/1280 四档不再有假阳性 |
-| 折叠箭头溢出（产品源） | `summary::after` 用 border 拼箭头再 `rotate()`，旋转后的伪元素盒子外扩，320/390 下多出 3px 横向可滚动溢出 | 箭头改 `clip-path` 多边形绘制（10×10，开合两套顶点），`transition:opacity/clip-path .2s` 保留翻转观感；`.project-tools` 的 `⌄` 字形不受影响 | 整页 `scrollWidth<=innerWidth` 在四档宽度成立；开合仍 0.28s 高度过渡 |
+| 折叠箭头溢出（产品源） | `summary::after` 用 border 拼箭头再 `rotate()`，旋转后的伪元素盒子外扩，320/390 下多出 3px 横向可滚动溢出 | 箭头改 `clip-path` 多边形绘制（10×10，开合两套顶点），`transition:opacity/clip-path .2s` 保留翻转观感；`.project-tools` 的 `⌄` 字形不受影响 | 实测箭头盒 10×10、`clip-path` 闭合 `polygon(50% 68%,4% 22%,14% 12%,50% 48%,86% 12%,96% 22%)`、展开为镜像顶点、opacity .45→.85、transition `opacity, clip-path 0.2s`；整页 `scrollWidth` 390/390、1280/1280，横向溢出 0 |
 
 本地实际验证：Playwright 走真实 Chrome 渠道、单 worker、retries 0，固定 Node22 复用 18186/18184，未重启/build/typegen。
 - 受影响增量 booking-profile + interface-feedback + presales 共 57 项，17.3 分钟全过（`57 passed`）。
 - 此前唯一崩溃点 product-experience 两项在 Chrome 下全过：T050/T051 5.2 分钟通过，T051 上传用例同批通过。
 - root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 边界通过；`git diff --check` 干净。
 - 测试只写新隔离 fixture，未向体验项目写入；私密 state 未打印/覆盖。不扩称微信/手机真机、系统输入法、VoiceOver 或生产验收。
+- 箭头改法的观感单独确认：在真实 Chrome 里用产品层同一套 CSS 渲染折叠项，闭合态为向下的 V 形、展开态为向上的 V 形，无模糊色块；截图 m31-chevron-closed.png / m31-chevron-open.png。（探针脚本用完即删，未入库。）
