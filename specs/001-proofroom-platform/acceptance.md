@@ -292,3 +292,26 @@ T137/T138完成。手机端 `workspace-top` 胶囊左侧常驻「← 返回上�
 - 受影响增量 action-placement + galleries + interface-feedback + orders + presales 共 68 项 19.0 分钟，唯一 failed 为 UI22/AT33（见上），修复后单跑 `1 passed (13.4s)`；`orders.spec.ts` 全量复跑 `9 passed`，仅 T084 的 `toBeFocused()` 收到 `inactive`——已在 HEAD `git stash` 后连跑 2 次确认同样失败，判为既有失败、环境无关，本轮不改。
 - T137 单跑 `1 passed (20.2s)`。
 - root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 边界通过；改动 8 个文件 eslint `0 errors, 3 warnings`（均为既有 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）；`git diff --check` 干净。不扩称微信/手机真机、系统输入法或生产验收。
+
+## M35 · 打包状态手动刷新下线 · 2026-11-16
+T139/T140完成。M33 把「刷新下载状态」「刷新精修预览」删掉后，交付页 ZIP 卡里还留着「刷新原片打包状态 / 刷新精修打包状态」——这是产品页上最后一个仍带"刷新"字样的按钮。它同样被两件事覆盖：页面级下拉刷新（`useResource` 默认进 `registry.reads`）与 ZIP 卡自己的 1400ms 轮询（`state` 为 `pending`/`processing` 时自动重读）。
+
+改法：把该分支从按钮换成状态文案，其余动作按钮保持不变。
+
+| 场景 | 改之前 | 改之后 |
+| --- | --- | --- |
+| 主下载流程准备中（`primary && autoDownload`） | 按钮「正在准备下载…」，禁用 | `role="status"` 文案「正在准备下载…」 |
+| 其余（含非主卡、`available` 为 false） | 按钮「刷新{原片\|精修}打包状态」 | 文案「就绪后这里会自动出现下载按钮，也可下拉刷新查看进度。」 |
+
+**没有删掉的按钮，因为它们不是刷新**：`核对刚才的下载`/`核对上次…准备请求`（结果未确认时的核对入口）、`重新准备当前{原片|精修}`、`准备{原片|精修}ZIP`、`重试准备{原片|精修}`（`failed`/`expired` 后的动作）、`下载…`——这些是产生状态变化的动作，不是重复读取。
+
+T081 断言随之调整：原来断言 `getByRole('button',{name:'正在准备下载…'})` 可见，现在改 `getByText('正在准备下载…',{exact:true})`（`notice` 那条更长的提示不会被 `exact` 命中），并补一条 `.zip-card` 内 `刷新*` 按钮计数为 0 的守卫。
+
+排除法复核：页面上剩余的「重新读取/读取最新」都不是页刷新，而是冲突与回执恢复——uploads 的 `读取最新服务器回执`、delivery 的 `读取最新对应`、photos 的 `读取最新清单后重试`/`读取最新照片`、config-editor 的 `读取最新配置…`、slot-picker 与 schedule 的 `重新读取时段`（可用性查询）。`/studio/platform` 的 `刷新运行状态`/`刷新账号状态` 与客户公开页 `刷新项目进度` 按 M33 结论保留：前者所在路由 `ProductExperience active={false}` 没有下拉刷新，后者是未登录访客。
+
+本地实际验证：Playwright 真实 Chrome 渠道、单 worker、retries 0，复用 18186/18184，未重启/build/typegen。
+- action-placement 15 项 1.2 分钟全过。
+- delivery + interface-feedback 37 项 2.9 分钟：唯一 failed 为 `T094`（下拉刷新同步列表总数），单跑 `1 passed (3.9s)`，属该用例已知的后台轮询抖动，非本轮回归。
+- Web `tsc --noEmit` 通过；改动 2 文件 eslint `0 errors, 4 warnings`（既有 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）；`git diff --check` 干净。
+
+另：用户本轮反馈的「咨询 → 更多咨询列表操作 → 刷新咨询」在 M33（`6d3ede6`）已经删除，源码与 dev 服务当前下发的 `apps_web_src_features_*.js` 中该文案计数均为 0，`action-placement` T135 复跑通过；截图来自改动前的旧页面，重新加载即可看到新界面。

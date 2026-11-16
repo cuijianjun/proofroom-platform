@@ -206,3 +206,11 @@ M33验收：受影响增量 action-placement + backups + galleries + interface-f
 - [x] T138 用例随入口下线改写：orders 三处（`← 返回摄影师项目` 改 `goto` 带 `section=overview`、`← 返回项目列表` 改 `goBack()`、对话框成功提示改 `.filter({hasText}).first()`）、interface-feedback T077 两处、galleries UI30-33 一段重写（返回后 `photoQ` 不再保留，重新执行搜索）；新增 T137 断言详情页 `.workspace-content` 内不存在 `← 返回*` 文案与 `/返回(项目|图库|咨询)/` 链接，手机走胶囊、桌面走浏览器历史均能回到列表
 
 M34验收：受影响增量 action-placement + galleries + interface-feedback + orders + presales 共 68 项 19.0 分钟通过（唯一 failed 为 UI22/AT33 的 strict mode 双 `data-action-ack`，单跑修复后 13.4s 通过；`orders.spec.ts` 全量复跑 9 passed，仅 T084 聚焦断言失败，已 `git stash` 在 HEAD 连跑 2 次同样失败，判定既有）；T137 单跑 20.2s 通过。root/Web `tsc --noEmit`、`check-architecture.mjs`、`git diff --check` 均通过，改动 8 文件 eslint 0 errors / 3 条既有 warning。详见 acceptance.md M34。
+
+
+## M35 · 打包状态手动刷新下线（2026-11-16）
+根proofroom@agent/proofroom-local-main(7636d78)，工作区在本批前干净；只动交付页 ZIP 卡与一条 e2e 断言；平台后台、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+- [x] T139 交付页 ZIP 卡里「刷新原片打包状态 / 刷新精修打包状态」是页面上最后一个仍带"刷新"字样的按钮，同样已被下拉刷新与 ZIP 卡自带的 1400ms 轮询覆盖，改为纯状态文案：主下载流程准备中显示 `正在准备下载…`（`role="status"`），其余情况显示「就绪后这里会自动出现下载按钮，也可下拉刷新查看进度。」；`核对/重新准备/准备ZIP/重试准备/下载` 这些动作按钮不动
+- [x] T140 interface-feedback T081 的过渡态断言从"按钮可见"改为"文案可见"，并补一条 `.zip-card` 内 `刷新*` 按钮计数为 0 的守卫
+
+M35验收：action-placement 15 项 1.2 分钟全过；delivery + interface-feedback 37 项 2.9 分钟通过（唯一 failed 为 T094 那条已知的后台轮询抖动，单跑 3.9s 通过）；Web `tsc --noEmit`、`git diff --check` 通过，改动 2 文件 eslint 0 errors / 4 条既有 warning。详见 acceptance.md M35。
