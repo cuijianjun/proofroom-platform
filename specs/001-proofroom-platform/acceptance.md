@@ -206,3 +206,14 @@ T132完成。承接M30遗留的 `browserContext.newPage: Target crashed`，用�
 - root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 边界通过；`git diff --check` 干净。
 - 测试只写新隔离 fixture，未向体验项目写入；私密 state 未打印/覆盖。不扩称微信/手机真机、系统输入法、VoiceOver 或生产验收。
 - 箭头改法的观感单独确认：在真实 Chrome 里用产品层同一套 CSS 渲染折叠项，闭合态为向下的 V 形、展开态为向上的 V 形，无模糊色块；截图 m31-chevron-closed.png / m31-chevron-open.png。（探针脚本用完即删，未入库。）
+
+## M32 · 工作室名展开按钮底色 · 2026-11-16
+T134完成。承接M31的 Chrome 复测，修一处视觉缺陷：`我的工作室` 卡片里长名称的展开按钮，鼠标停在上面会出一块 44×44 的浅色圆角底（`#f8f4ef` 落在 `#f0e8df` 卡片上），点开收起时指针仍在该按钮上，看起来像多出一个背景方框。
+
+| 项 | 缺陷 | 处理 |
+| --- | --- | --- |
+| 展开按钮 hover 底色 | `.name-disclosure-toggle:hover` 带 `background:var(--color-surface-2)`，与卡片 `#f0e8df` 形成可见方块 | 去掉 hover/active 底色，只保留 `color` 变化（hover 转 pine、按下转 pine-dark）；同时清掉已无作用的 `border-radius:8px` |
+
+同类位置一致性：客户页 `.client-brand-toggle`、项目页同一 `.name-disclosure-toggle` 共用此规则，改一处全部收敛，无残留底色。
+实测（Chrome 157 渠道，390×852）：静止/悬停/点开三态 `background-color` 均为 `rgba(0,0,0,0)`，悬停态 `color` 变为 `rgb(138,90,59)`，展开态箭头朝上；44px 触区与 18px 箭头未变。
+回归：action-placement + booking-profile 共 31 项 2.3 分钟全过；`git diff --check` 干净。不扩称其它宽度或真机。

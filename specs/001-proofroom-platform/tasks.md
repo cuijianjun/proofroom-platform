@@ -187,3 +187,7 @@ M30验收：折叠项实测blockSize 0→392→466→476px过渡0.28s、箭头45
 - [x] T133 折叠箭头改 `clip-path` 绘制，消除旋转伪元素撑出的 3px 横向可滚动溢出，保留开合翻转与减少动态收敛
 
 M31验收：Chrome 157 渠道下 booking-profile + interface-feedback + presales 共 57 项 17.3 分钟全过；崩溃点 product-experience 两项全过（T050/T051 5.2 分钟）；root/Web tsc、架构边界、diff --check 均通过。详见acceptance.md M31。
+
+## M32 · 工作室名展开按钮底色（2026-11-16）
+根proofroom@agent/proofroom-local-main，只动一条产品 CSS 与验收记录；平台后台、API/worker/packages、业务与数据不动，不重启服务、不部署。
+- [x] T134 去掉 `.name-disclosure-toggle` 的 hover/active 底色（原来 `surface-2` 在工作室卡片上呈一块可见方块），只保留颜色反馈，并清掉多余的 `border-radius`
