@@ -163,3 +163,19 @@ M27验收：9项复制/入口/平台增量全过50.6s，独审补文件名失败
 - [x] T127 手机电脑边界/44px触区/键盘与焦点/箭头方向及减少动态效果/表单草稿不提交/数据不变增量、静态与非实现者复核，更新验收
 
 M28验收：10个唯一本批受影响用例闭环（m28-final 9过1减少动态时长断言不兼容，按既有全局0.01ms规则修测试后m28-recheck新2项全过30.1s；非一次10项全绿）。产品源码在本轮集成期间未改；root/Web类型、架构/diff guard过，7文件lint0错5旧告警与HEAD逐规则相同。foundation_review仅静态复核无确定P1/P2。详见acceptance.md M28。
+
+
+## M29 · 手机端产品体验收口（2026-11-16）
+根proofroom@agent/proofroom-local-main(a3873eb)，保M23–M28未提交；只外部客户/摄影师/Owner Web壳与共享组件/CSS及增量/spec，平台后台/API/worker/packages不动。固定Node22复用18186/18184，不重启/build/typegen。
+- [x] T128 横向标签条右箭头收敛为32px圆盘、按钮保留44px触区且末端自动隐藏；我的工作室改为完善进度+一键待办直达，长名称行内箭头展开
+- [x] T129 共享产品层原语（下拉刷新/上滑加载/横向条/选择导航/名称折叠）与Toast、弹层、相册手势、选择器反馈统一到同一套44px触区与类型层级
+
+M29验收：横向条右箭头实测按钮44×44、可见圆盘32px；/studio/mine 完善进度、工作室内名称展开与整页横向溢出320/390为0；受影响增量与静态检查通过。详见acceptance.md M29。源码已随3418b12/61dc74f提交，本轮仅补记spec。
+
+
+## M30 · 反馈位置与折叠、骨架、步进（2026-11-16）
+根proofroom@agent/proofroom-local-main(9b27abc)，工作区在本批前干净；只外部共享core/CSS与项目/咨询/图库/历史/设置五页及增量/spec。平台后台、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+- [x] T130 提交成功反馈从页首文字改为底部浮层（DOM位置与role=status、.notice.success语义不变，pointer-events:none，4秒后淡出）；项目/咨询/图库/历史首屏改形状骨架；精修张数加44px加减步进键
+- [x] T131 折叠项统一44px头部+箭头随开合旋转+支持时高度过渡（不破坏details语义）；手机勾选框22px、触区仍由44px label承担；空态图标收进圆形底片；减少动态效果关闭全部新增动效
+
+M30验收：折叠项实测blockSize 0→392→466→476px过渡0.28s、箭头45°→225°；成功反馈0.7s不透明、4.9s透明度0且命中测试落到下层字段；勾选框22×22、check-line 48px；骨架3行252px带role=status/aria-busy；步进键两枚44×44；320/390整页横向溢出0。presales/action-placement/interface-feedback/galleries/booking-profile共75项增量通过；product-experience两项T050/T051在暂存本批改动后同样失败（browserContext.newPage崩溃），判定为既有环境问题非本批回归。root/Web tsc通过。详见acceptance.md M30。

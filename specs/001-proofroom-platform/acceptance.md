@@ -164,3 +164,24 @@ T126–127完成。Mine工作室身份、摄影师/客户项目名称、公开�
 - m28-mine-390.png、m28-project-1440.png、m28-client-390.png已实际查看；不扩称微信/手机真机、系统输入法、VoiceOver或生产验收。
 
 固定Node22复用18186/18184，未重启/build/typegen/commit/push/deploy；现有未提交改动全保。测试仅写新隔离fixture，私密state未打印/覆盖。证据集中/tmp/proofroom-qa/apple-experience/m28-*，验收后可清理。/studio/mine与/t/experience-8e4929209248已确认HTTP200。当前用户要求新会话交接，下一步只读交接与Git确认后等待新指令。
+
+
+## M29 · 手机端产品体验收口 · 2026-11-16
+T128–129完成。外部客户/摄影师/Owner三端共享产品层原语（下拉刷新、上滑加载、横向条、选择导航、名称折叠）与Toast/弹层/相册手势/选择器反馈统一；横向标签条右箭头由大圆改32px圆盘、按钮本体仍44×44且到末端自动隐藏；“我的工作室”改为完善进度+一键待办直达。平台后台、API/worker/packages、业务与数据未改。
+
+本地实际验证：/studio/mine 与共享横向条实测箭头按钮44×44、可见圆盘32px；完善进度可点击直达；长名称行内箭头展开保两行折叠；320/390整页横向溢出0。受影响增量与静态检查通过。源码随3418b12、61dc74f提交，本节为spec补记，不新增声称。
+
+
+## M30 · 反馈位置与折叠、骨架、步进 · 2026-11-16
+T130–131完成。五项手机端交互收口，全部只在外部产品UI内，平台后台/API/worker/packages无源diff，业务规则、数据库、登录与既有体验数据未改。
+
+| 项 | 实测行为 | 证据 |
+| --- | --- | --- |
+| 成功反馈贴底 | 保存成功后反馈以position:fixed停在底部84px（底部导航之上），role=status仍唯一、文案“已保存到工作室。”不变；0.7s不透明，4.9s透明度0，pointer-events:none时elementFromPoint命中下层字段，不挡后续输入 | m30-ack-live.png；ack@0.7s/ack@4.9s/ack-hit输出 |
+| 折叠项动效 | summary统一44px头部、marker隐藏；展开时::details-content blockSize 0→392→466→476px（0.28s），箭头45°→225°；不支持interpolate-size时退化为瞬时展开，<details>语义与xpath断言不变 | details-trace/details-after输出；m30-details-open.png |
+| 勾选框 | 手机端22×22、accent取品牌色，触区由.check-line 48px承担；桌面仍走20px原规则 | /studio/portfolio 实测count 2、size 22×22、line 48px |
+| 首屏骨架 | 项目/咨询/图库/历史空列表首屏改3–4行形状骨架，带role=status与aria-busy；有数据时仍用原Loading，加载完成后骨架消失 | 骨架实测3行252px；m30-skeleton.png |
+| 精修张数步进 | 默认精修张数与套餐精修张数两侧各加44×44加减键，1…300夹取，输入框id/data-field-path/label文案不变 | 步进键[[44,44],[44,44]]，值10，label“精修张数”仍可定位 |
+| 空态与减少动态 | 手机空态图标收进56px圆底；prefers-reduced-motion关闭ack-dock、骨架扫光、箭头与步进过渡 | globals.css M30块；静态复核 |
+
+固定Node22、复用18186（API 18184 / proofroom_test），单worker、retries 0。受影响增量presales/action-placement/interface-feedback/galleries/booking-profile共75项通过；product-experience T050/T051 报browserContext.newPage崩溃，暂存本批全部改动后复跑同样失败，判定为既有本地Chrome环境问题，未计入本批回归也不宣称通过。root/Web tsc --noEmit通过。测试只写隔离fixture，私密state未打印/覆盖。不扩称微信/手机真机、VoiceOver或生产验收。证据在/tmp/proofroom-qa/apple-experience/m30-*，验收后可清理。
