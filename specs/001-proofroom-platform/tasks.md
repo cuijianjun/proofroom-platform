@@ -198,3 +198,11 @@ M31验收：Chrome 157 渠道下 booking-profile + interface-feedback + presales
 - [x] T136 用例随入口下线改写：action-placement 原 T113/114 重写为 T135（断言页面上不存在任何以"刷新"开头的按钮、不存在只含刷新项的"更多*操作"菜单，同时核对主操作可见与零写入）；interface-feedback T081 改由 `ZipCard` 1400ms 自动轮询推进下载、T094 末段改下拉刷新触发 503 失败态并更新标题措辞；booking-profile T069 改下拉刷新读取新增时段；另把 action-placement T117 的渐隐采样从固定 45ms 改为逐帧等到首个中间值，消除过渡未启动时采到 opacity 1 的抖动
 
 M33验收：受影响增量 action-placement + backups + galleries + interface-feedback + presales + booking-profile 共 77 项 13.3 分钟全过（`77 passed`）；root/Web `tsc --noEmit`、`check-architecture.mjs`、改动文件 eslint（0 errors / 9 条既有 warning）、`git diff --check` 均通过。真实 Chrome 390×852 实测 6 个受影响页面 `刷新*` 按钮为空、`scrollWidth==innerWidth`、下拉返回 `已刷新`。详见acceptance.md M33。
+
+
+## M34 · 返回入口与顶部胶囊去重（2026-11-16）
+根proofroom@agent/proofroom-local-main(97921b1)，工作区在本批前干净；只动外部产品 4 个 feature 与 4 个 e2e 用例；平台后台、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+- [x] T137 顶部 `workspace-top` 胶囊里的「← 返回上一页」在手机端已覆盖上一层导航，页面内容区再放「← 返回项目列表 / ← 返回图库 / ← 返回图库列表 / ← 返回咨询列表 / 返回摄影师项目」就是同一动作的第二个入口，全部删除；同时拆掉只为这些返回链接服务的 `from=` 查询参数链路（6 处生产、2 处消费）；保留无 workspace 外壳的 `/studio/platform`「返回工作台」与错误态「返回我的工作室」、以及语义不同的一批「返回」文案
+- [x] T138 用例随入口下线改写：orders 三处（`← 返回摄影师项目` 改 `goto` 带 `section=overview`、`← 返回项目列表` 改 `goBack()`、对话框成功提示改 `.filter({hasText}).first()`）、interface-feedback T077 两处、galleries UI30-33 一段重写（返回后 `photoQ` 不再保留，重新执行搜索）；新增 T137 断言详情页 `.workspace-content` 内不存在 `← 返回*` 文案与 `/返回(项目|图库|咨询)/` 链接，手机走胶囊、桌面走浏览器历史均能回到列表
+
+M34验收：受影响增量 action-placement + galleries + interface-feedback + orders + presales 共 68 项 19.0 分钟通过（唯一 failed 为 UI22/AT33 的 strict mode 双 `data-action-ack`，单跑修复后 13.4s 通过；`orders.spec.ts` 全量复跑 9 passed，仅 T084 聚焦断言失败，已 `git stash` 在 HEAD 连跑 2 次同样失败，判定既有）；T137 单跑 20.2s 通过。root/Web `tsc --noEmit`、`check-architecture.mjs`、`git diff --check` 均通过，改动 8 文件 eslint 0 errors / 3 条既有 warning。详见 acceptance.md M34。

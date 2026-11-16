@@ -254,3 +254,41 @@ T135/T136完成。产品层从 M29 起就有下拉刷新：`PageRefresh` 在 `sc
 - root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 边界通过；改动 11 个文件 eslint `0 errors, 9 warnings`（均为既有 `react-hooks/set-state-in-effect` 等）；`git diff --check` 干净。
 - 真实 Chrome 390×852 探针：6 个受影响页面 `刷新*` 按钮为空、`documentElement.scrollWidth==innerWidth==390` 无横向溢出；滚轮上滑触发下拉得到 `{state:'done',text:'已刷新'}`，1.4s 后反馈消失，说明下拉确实覆盖了被删按钮的职责。
 - 截图目视确认工作台标题右侧、预约日程卡片标题右侧均无空位，排版不下塌。不扩称微信/手机真机、系统输入法或生产验收。
+
+## M34 · 返回入口与顶部胶囊去重 · 2026-11-16
+T137/T138完成。手机端 `workspace-top` 胶囊左侧常驻「← 返回上一页」（`router.back()`，`<768px` 显示、桌面隐藏）。页面内容区原有的「← 返回项目列表 / ← 返回图库 / ← 返回图库列表 / ← 返回咨询列表 / 返回摄影师项目」都是同一个"回上一层"动作的第二个入口，本轮全部删除。
+
+删掉的入口：
+
+| 页面 | 删掉的入口 | 原逻辑 |
+| --- | --- | --- |
+| 项目详情 | ← 返回图库 / ← 返回项目列表 | 读 `?from=` 参数决定去向 |
+| 项目详情（客户预览） | 返回摄影师项目 | 固定指向列表 |
+| 图库列表 | ← 返回项目列表 | 读 `?from=` |
+| 图库详情 | ← 返回图库列表 | 读 `?from=` |
+| 咨询详情 | ← 返回咨询列表 | 读 `?status=` 拼回 |
+
+`from=` 参数链路一并拆除：生产方 6 处（项目列表卡片、图库列表"管理图库"、图库详情两处 `&from=`、来源图库切换、历史"查看历史详情"），消费方 2 处（projects/galleries 各自的 `params.get('from')` 与返回链接）。`grep -rn "返回图库\|返回项目列表\|返回咨询列表\|返回摄影师项目" tests apps/web/src` 已为空。
+
+刻意保留的「返回」文案及理由：
+
+| 保留项 | 为什么不删 |
+| --- | --- |
+| `/studio/platform`「返回工作台」、无工作室时 `/studio/account`「返回工作台」 | 这两条路由不挂 workspace 外壳（`application.tsx` 直接 `return <main className="page">`），页面没有顶部胶囊，删了就没有回去的路 |
+| `application.tsx` 错误态「返回我的工作室」 | `Empty` 分支，同样不在 workspace 外壳内 |
+| 时段表单「返回重选时段」、作品区「返回作品区选择或回改」、账号「返回密码登录」、首页「返回首页」、项目表单「返回重新核对」 | 语义是"回到本页的上一步/某个锚点/切换登录方式"，不是上一层导航，与胶囊不重复 |
+
+列表回退能力不依赖 URL 记忆：`useCursorWindow`（`list-window.ts`）在模块级 `windows` Map 里按路径存快照，`pull` 的 `onClickCapture` 在点 `a[href]` 前捕获 `scrollY` 与窗口大小，返回时 `requestAnimationFrame` 恢复。所以删掉「返回项目列表」后 `orders.spec.ts` UI05/24 的 30 张卡 + `scrollY>1000` 断言仍然成立。
+
+用例改写与两处踩坑：
+- `orders.spec.ts` UI08/09/17/18/20/21/28：原为"进详情 → 点客户预览 → 点返回摄影师项目"，改 `page.goto('/studio/projects/<id>?studio=<sid>&section=overview')`。**必须带 `section=overview`**：项目详情分区缺省时按阶段推导，P1 且无未来预约会落到 `originals`（原片），第 25 行的「改期或仅取消预约」就找不到了。先试的 `goBack()` 会停在 `/preview?section=originals`，也失败。
+- `orders.spec.ts` UI05/24：`← 返回项目列表` 改 `page.goBack()`，断言不变。
+- `orders.spec.ts` UI22/AT33：`.notice.success` 在页面与 Dialog 内各渲染一份 `data-action-ack`（`ActionStatus`），`toContainText` 触发 strict mode violation。改为 `.filter({hasText:'业务状态与下载期限保持原值'}).first()).toBeVisible()`，语义等价。
+- `interface-feedback.spec.ts` T077 两处：列表返回改 `goBack()` + 断言卡片数；图库链路去掉 `listFrom` 与 `&from=`，返回后改断言 URL 匹配 `/studio/galleries/<id>\?` 且「选片与反馈」`aria-current=page`。
+- `galleries.spec.ts` UI30-33：`进入关联项目与上传` → `goBack()`。**返回后不能再断言 `photoQ` 仍在**——`GalleryPhotos` 的 `useState(q)` 只在挂载时取一次 URL 值，返回是重新挂载。改为断言 URL 保留 `photoCategory`、分类选中「逆光」、2 张照片，再重新 `fill('frame04')` + 点搜索断言 1 张（`managerURL` 变量删除，`grep -c managerURL` 为 0）。
+- 新增 `action-placement.spec.ts` T137（编号避让 M33 已占的 T136）：390/1440 两档进项目详情，断言 `.workspace-content` 内无 `← 返回*` 文案、无 `/返回(项目|图库|咨询)/` 链接、无横向溢出；手机点 `返回上一页` 胶囊回到列表，桌面用 `goBack()`，两档都断言回到 `/studio/projects?studio=<sid>` 且 1 张卡。
+
+本地实际验证：Playwright 走真实 Chrome 渠道、单 worker、retries 0，固定 Node22 复用 18186/18184，未重启/build/typegen。
+- 受影响增量 action-placement + galleries + interface-feedback + orders + presales 共 68 项 19.0 分钟，唯一 failed 为 UI22/AT33（见上），修复后单跑 `1 passed (13.4s)`；`orders.spec.ts` 全量复跑 `9 passed`，仅 T084 的 `toBeFocused()` 收到 `inactive`——已在 HEAD `git stash` 后连跑 2 次确认同样失败，判为既有失败、环境无关，本轮不改。
+- T137 单跑 `1 passed (20.2s)`。
+- root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 边界通过；改动 8 个文件 eslint `0 errors, 3 warnings`（均为既有 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）；`git diff --check` 干净。不扩称微信/手机真机、系统输入法或生产验收。

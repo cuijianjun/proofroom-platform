@@ -99,6 +99,24 @@ test('T135: pages rely on pull-to-refresh instead of a manual refresh entry, and
  const after=await data(await page.request.get(s.base+'/projects/'+s.project.id));expect(after).toMatchObject({version:s.project.version,workflowStage:s.project.workflowStage,title:s.project.title});
 });
 
+test('T137: detail pages rely on the top capsule back affordance instead of an in-page return link',async({page})=>{
+ test.setTimeout(90000);const s=await seed(page);
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});
+  await page.goto(`/studio/projects?studio=${s.sid}`);
+  await page.locator('.project-card').getByRole('heading').getByRole('link').click();
+  await expect(page).toHaveURL(new RegExp('/studio/projects/'+s.project.id));
+  // 详情页里不再出现任何「← 返回…」链接；回到列表只走左上胶囊或浏览器历史。
+  await expect(page.locator('.workspace-content').getByText(/←\s*返回/)).toHaveCount(0);
+  await expect(page.locator('.workspace-content').getByRole('link',{name:/返回(项目|图库|咨询)/})).toHaveCount(0);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  if(width<768){await page.getByRole('button',{name:'返回上一页',exact:true}).click();}
+  else{await page.goBack();}
+  await expect(page).toHaveURL(new RegExp('/studio/projects\\?studio='+s.sid));
+  await expect(page.locator('.project-card')).toHaveCount(1);
+ }
+});
+
 test('T114/115: inquiry actions are next to its identity, the primary entry reaches the form, and ignore or restore keeps the submitted snapshot',async({page,browser})=>{
  const s=await seed(page),guest=await browser.newContext({baseURL:'http://127.0.0.1:18186'}),customer=await guest.newPage();
  try{
