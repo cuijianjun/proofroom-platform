@@ -73,28 +73,25 @@ test('T126/127: public and PIN customer names share the arrow pattern without su
  }finally{await guest.close();}
 });
 
-test('T113/114: contextual tools fit phone and desktop, keep primary actions visible and close by keyboard or outside pointer without writes',async({page})=>{
+test('T135: pages rely on pull-to-refresh instead of a manual refresh entry, and primary actions stay visible on phone and desktop without writes',async({page})=>{
  test.setTimeout(90000);const s=await seed(page);let writes=0;
  page.on('request',r=>{if(r.url().includes('/api/v1/')&&!['GET','HEAD'].includes(r.method()))writes++;});
  const routes=[
-  {path:'inquiries',menu:'更多咨询列表操作',primary:null,tool:'刷新咨询'},
-  {path:'galleries',menu:'更多图库列表操作',primary:'创建或进入图库',tool:'刷新图库列表'},
-  {path:'schedule',menu:'更多日程操作',primary:'新增可约时段',tool:'刷新日程'},
-  {path:'history',menu:'更多历史操作',primary:'搜索历史',tool:'刷新历史'},
-  {path:'help',menu:'更多备份操作',primary:'创建工作室加密备份',tool:'刷新备份记录'}
+  {path:'',primary:null},
+  {path:'inquiries',primary:null},
+  {path:'galleries',primary:'创建或进入图库'},
+  {path:'schedule',primary:'新增可约时段'},
+  {path:'history',primary:'搜索历史'},
+  {path:'help',primary:'创建工作室加密备份'}
  ];
  for(const width of [320,1440]){
   await page.setViewportSize({width,height:900});
   for(const row of routes){
-   await page.goto(`/studio/${row.path}?studio=${s.sid}`);
-   const trigger=page.getByTitle(row.menu,{exact:true});await expect(trigger).toBeVisible();
+   await page.goto(`/studio${row.path?'/'+row.path:''}?studio=${s.sid}`);
    if(row.primary)await expect(page.getByRole('button',{name:row.primary,exact:true})).toBeVisible();
-   await expect(page.getByRole('button',{name:row.tool,exact:true})).toBeHidden();
-   await openActions(trigger);const panel=width<768?page.getByRole('dialog',{name:row.menu,exact:true}):trigger.locator('xpath=..').locator('.action-menu-panel');
-   const box=(await panel.boundingBox())!;expect(box.x).toBeGreaterThanOrEqual(width<768?0:12);expect(box.x+box.width).toBeLessThanOrEqual(width-(width<768?0:12));
-   expect((await trigger.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-   await page.keyboard.press('Escape');await expect(panel).toBeHidden();await expect(trigger).toBeFocused();
-   await openActions(trigger);if(width<768)await page.mouse.click(8,8);else await page.locator('h1').first().click();await expect(panel).toBeHidden();
+   // 下拉刷新已覆盖这些读；页面上不再保留任何手动刷新入口或只剩刷新项的菜单。
+   await expect(page.getByRole('button',{name:/^刷新/})).toHaveCount(0);
+   await expect(page.getByTitle(/更多.*操作/,{exact:false}).filter({hasText:/刷新/})).toHaveCount(0);
    expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
  }
@@ -143,7 +140,7 @@ test('T117/118: the smaller right arrow fades without an invisible hit target an
  const s=await seed(page);await page.setViewportSize({width:390,height:900});await page.goto('/t/'+s.slug);
  const rail=page.locator('[data-rail-label="作品分组"]'),tabs=rail.getByRole('tablist'),arrow=rail.locator('.rail-next');await expect(arrow).toHaveAttribute('data-visible','true');
  expect(await arrow.locator('svg').getAttribute('width')).toBe('16');await expect.poll(()=>arrow.evaluate(el=>Number(getComputedStyle(el).opacity))).toBe(1);
- const during=await tabs.evaluate(async el=>{const arrow=el.parentElement!.querySelector<HTMLButtonElement>('.rail-next')!;el.scrollTo({left:el.scrollWidth,behavior:'instant'});await new Promise<void>(resolve=>{const check=()=>arrow.getAttribute('data-visible')==='false'?resolve():requestAnimationFrame(check);check();});await new Promise(resolve=>setTimeout(resolve,45));return {opacity:Number(getComputedStyle(arrow).opacity),pointer:getComputedStyle(arrow).pointerEvents,disabled:arrow.disabled,tabIndex:arrow.tabIndex};});
+ const during=await tabs.evaluate(async el=>{const arrow=el.parentElement!.querySelector<HTMLButtonElement>('.rail-next')!;el.scrollTo({left:el.scrollWidth,behavior:'instant'});await new Promise<void>(resolve=>{const check=()=>arrow.getAttribute('data-visible')==='false'?resolve():requestAnimationFrame(check);check();});let opacity=1;/* 160ms 渐隐的起点帧数不固定，逐帧等到第一个中间值，避免采到过渡尚未启动的 1。 */for(let i=0;i<24&&opacity>=1;i++){await new Promise(r=>requestAnimationFrame(()=>r(null)));opacity=Number(getComputedStyle(arrow).opacity);}return {opacity,pointer:getComputedStyle(arrow).pointerEvents,disabled:arrow.disabled,tabIndex:arrow.tabIndex};});
  expect(during.opacity).toBeGreaterThan(0);expect(during.opacity).toBeLessThan(1);expect(during.pointer).toBe('none');expect(during.disabled).toBe(true);expect(during.tabIndex).toBe(-1);
  await expect(arrow).not.toBeVisible();await tabs.evaluate(el=>el.scrollTo({left:0,behavior:'instant'}));await expect(arrow).toHaveAttribute('data-visible','true');await expect(arrow).toBeEnabled();
  await page.emulateMedia({reducedMotion:'reduce'});await tabs.evaluate(el=>el.scrollTo({left:el.scrollWidth,behavior:'instant'}));await expect(arrow).not.toBeVisible();expect(await arrow.evaluate(el=>parseFloat(getComputedStyle(el).transitionDuration))).toBeLessThanOrEqual(.00001);
