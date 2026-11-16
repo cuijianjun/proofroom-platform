@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import {HorizontalRail,useProductExperience} from './product-experience';
 import { cx } from "@/components/ui";
 
 /** Tabs whose active item lives in a query parameter, so links are shareable and the server can read it (plan 4.12). */
 export function Tabs({ param = "tab", items, defaultValue, className }: { param?: string; items: { value: string; label: string; count?: number }[]; defaultValue?: string; className?: string }) {
+  const product=useProductExperience();
   const pathname = usePathname();
   const search = useSearchParams();
   const active = search.get(param) ?? defaultValue ?? items[0]?.value;
-  return (
+  const navigation=(
     <nav className={cx("flex gap-1 border-b border-line overflow-x-auto", className)} aria-label="Sections">
       {items.map((item) => {
         const params = new URLSearchParams(search.toString());
@@ -32,4 +34,5 @@ export function Tabs({ param = "tab", items, defaultValue, className }: { param?
       })}
     </nav>
   );
+  return product?<HorizontalRail label="页面分区">{navigation}</HorizontalRail>:navigation;
 }

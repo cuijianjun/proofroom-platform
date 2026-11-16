@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/components/ui";
 import { Icon } from "@/components/ui/icons";
+import {useProductComposition} from './product-experience';
 
 /**
  * Lightbox (plan 4.23): keyboard (arrows, Escape, F), swipe, double-tap and
@@ -29,6 +30,7 @@ export function Lightbox({ photos, index, onClose, onIndexChange, onFavorite, ac
   const touch = useRef<{ x: number; y: number; dist: number; time: number } | null>(null);
   const lastTap = useRef(0);
   const modal = useRef<HTMLDialogElement>(null);
+  const composing=useProductComposition();
   useEffect(()=>{setPan({x:0,y:0});setZoom(1);setFailed(false);setFullscreenError('');},[photo?.id]);
 
   const go = useCallback((delta: number) => {
@@ -45,6 +47,7 @@ export function Lightbox({ photos, index, onClose, onIndexChange, onFavorite, ac
   useEffect(()=>{
     if(!open)return;
     const onKey=(e:KeyboardEvent)=>{
+      if(e.isComposing||e.keyCode===229||composing?.current)return;
       const target=e.target as HTMLElement;
       if(target.closest('input,textarea,select,[contenteditable="true"]'))return;
       if(e.key==='ArrowRight'){e.preventDefault();go(1);}
@@ -53,7 +56,7 @@ export function Lightbox({ photos, index, onClose, onIndexChange, onFavorite, ac
       else if(e.key===' '&&target.tagName!=='BUTTON'&&target.tagName!=='A'){e.preventDefault();setPlaying(p=>!p);}
     };
     document.addEventListener('keydown',onKey);return()=>document.removeEventListener('keydown',onKey);
-  },[open,go,onFavorite,photo]);
+  },[open,go,onFavorite,photo,composing]);
 
   useEffect(() => {
     if (!open || !playing) return;
@@ -64,7 +67,7 @@ export function Lightbox({ photos, index, onClose, onIndexChange, onFavorite, ac
   if (!open || !photo) return null;
 
   return (
-    <dialog ref={modal} onClose={onClose} className="photo-lightbox" aria-label={`照片 ${index! + 1}，共 ${photos.length} 张`}>
+    <dialog ref={modal} onCancel={e=>{if(composing?.current)e.preventDefault();}} onClose={onClose} className="photo-lightbox" aria-label={`照片 ${index! + 1}，共 ${photos.length} 张`}>
       <div className="flex items-center justify-between px-4 py-3 text-sm">
         <span className="text-white/70">{index! + 1} / {photos.length}</span>
         <div className="flex items-center gap-1">
