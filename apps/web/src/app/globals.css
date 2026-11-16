@@ -351,8 +351,7 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
 [data-product-ui] .public-hero>.eyebrow{grid-column:1;font-size:12px;letter-spacing:.05em;margin:0}
 [data-product-ui] .public-hero h1{grid-column:1;font-size:clamp(26px,3vw,36px);line-height:1.3;margin:10px 0;overflow-wrap:anywhere}
 [data-product-ui] .public-hero>.public-intro{grid-column:1;margin:0;max-width:65ch;color:var(--color-ink-2);font-size:15px;line-height:1.7;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-[data-product-ui] .public-hero>.btn-primary{grid-column:2;grid-row:1/5;align-self:center;white-space:nowrap}
-[data-product-ui] .public-hero>.about-trigger{grid-column:1;justify-self:start;padding-left:0;font-size:14px}
+[data-product-ui] .hero-actions .about-trigger{font-size:14px;padding-inline:6px;color:var(--color-ink-2)}
 [data-product-ui] .public-section{padding:32px 0}
 [data-product-ui] .public-section h2{font-size:24px;margin-bottom:16px}
 [data-product-ui] .public-section .section-heading h2{margin:0}
@@ -792,3 +791,73 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
 .search-box-submit:focus-visible{color:var(--color-pine);outline:2px solid var(--color-pine);outline-offset:-2px}
 .search-box-input::-webkit-search-cancel-button{cursor:pointer}
 @media(prefers-reduced-motion:reduce){.search-box-submit{transition:none}}
+
+/* M41: 按苹果产品体验收口客户与摄影师两端——先给一处视觉重心，再让每个操作自己给出反馈。
+   平台后台（/studio/platform）不带 data-product-ui，下面的规则不会进入后台。 */
+
+/* 1. 客户首屏：一列重心，类型站稳，动作在同一条基线上。 */
+[data-product-ui] .public-hero{display:flex;flex-direction:column;align-items:flex-start;padding:44px 0 40px;max-width:none}
+[data-product-ui] .public-hero>.eyebrow{font-size:12px;letter-spacing:.06em;color:var(--color-brand);margin:0}
+[data-product-ui] .public-hero h1{font-size:clamp(28px,3.4vw,44px);line-height:1.22;letter-spacing:-.015em;font-weight:650;margin:14px 0 0}
+[data-product-ui] .public-hero>.public-intro{max-width:60ch;margin:16px 0 0;font-size:16px;line-height:1.85;color:var(--color-ink-2)}
+[data-product-ui] .hero-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:26px}
+[data-product-ui] .hero-cta{min-height:48px;padding-inline:26px;border-radius:999px}
+
+/* 2. 选中态只留一个信号：指示条 + 主色文字，不再叠一层药丸底色。 */
+[data-product-ui] .project-tabs button[aria-current=page],
+[data-product-ui] .group-tabs>button[aria-selected=true]{background:transparent}
+[data-product-ui] .project-tabs button[aria-current=page]{box-shadow:none}
+
+/* 3. 参考作品的选择收成小胶囊，和图片上的选中描边同源。 */
+[data-product-ui] .photo-check{position:relative;border:1px solid var(--color-line-2);border-radius:999px;padding:0 12px;min-height:34px;color:var(--color-ink-2);background:var(--color-surface);transition:background-color .16s ease,border-color .16s ease,color .16s ease}
+[data-product-ui] .photo-check>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+[data-product-ui] .public-photo[data-selected=true] .photo-check{background:var(--color-brand);border-color:var(--color-brand);color:#fff}
+[data-product-ui] .photo-check:has(>input:focus-visible){outline:2px solid var(--color-pine);outline-offset:2px}
+[data-product-ui] .photo-check:has(>input:disabled){opacity:.5}
+
+/* 4. 空态就是空态：不留空卡片和空的分页尾巴。 */
+[data-product-ui] .card.card-pad:empty,[data-product-ui] .list-end:empty{display:none}
+
+/* 5. 按压反馈统一：按下即缩小，抬起回到原位；禁用态不再假装可点。 */
+[data-product-ui] :is(.btn-primary,.btn-secondary,.btn-ghost,.btn-danger){transition:transform .14s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease,opacity .16s ease}
+[data-product-ui] :is(.btn-primary,.btn-secondary,.btn-ghost,.btn-danger):active:not(:disabled){transform:scale(.97)}
+[data-product-ui] :is(.btn-primary,.btn-secondary):disabled{opacity:.4;box-shadow:none}
+
+/* 6. 客户访问码：四位数字读起来像一串码，主操作撑满卡片宽度。 */
+[data-product-ui] .client-pin{border-radius:18px}
+[data-product-ui] .client-pin h1{font-size:clamp(24px,5vw,30px);line-height:1.35;margin:10px 0 0}
+[data-product-ui] .client-pin .form-stack{max-width:100%}
+[data-product-ui] .client-pin .form-stack>button{align-self:stretch;min-height:50px;justify-content:center;border-radius:12px;margin-top:2px}
+[data-product-ui] #client-pin{height:54px;font-size:21px;letter-spacing:.26em;text-indent:.26em;text-align:center;font-variant-numeric:tabular-nums}
+[data-product-ui] #client-pin::placeholder{font-size:14px;letter-spacing:.02em}
+/* 品牌字标的主副两行必须真的分两行，否则会和下方的项目名粘连。 */
+[data-product-ui] .client-space .client-brand-toggle .client-brand-clamped>span{display:block;margin-top:3px}
+
+/* 7. 客户空间的阅读行宽：桌面把文字块收在 760px，照片区保持原宽。 */
+@media(min-width:900px){
+ [data-product-ui] .client-space>:not(.public-header):not(.public-footer):not(:has(.photo-manager)){max-width:760px;margin-inline:auto}
+ /* 8. 访问码是一屏只做一件事：卡片在视口里略向下落，视线不被顶部压住。 */
+ [data-product-ui] .client-pin{margin-block:clamp(24px,9vh,88px)}
+}
+
+/* 9. 上传区只留一个入口：原生「选择文件 未选择任何文件」和拖拽提示在触屏上都是噪音。 */
+[data-product-ui] .upload-drop{position:relative}
+[data-product-ui] .upload-drop>.file-input{position:absolute;width:1px;height:1px;padding:0;border:0;opacity:0;overflow:hidden}
+[data-product-ui] .upload-drop:focus-within>label.btn-secondary{outline:2px solid var(--color-pine);outline-offset:2px}
+@media(max-width:767px){
+ [data-product-ui] .upload-drop:has(>.file-input)>p{display:none}
+}
+
+@media(max-width:767px){
+ [data-product-ui] .public-hero{padding:26px 0 22px}
+ [data-product-ui] .public-hero h1{font-size:27px;margin-top:10px}
+ [data-product-ui] .public-hero>.public-intro{font-size:15px;line-height:1.75;margin-top:12px}
+ [data-product-ui] .hero-actions{margin-top:20px;width:100%}
+ [data-product-ui] .hero-cta{flex:1;justify-content:center}
+ [data-product-ui] .photo-check{min-height:32px;padding:0 10px}
+}
+
+@media(prefers-reduced-motion:reduce){
+ [data-product-ui] :is(.btn-primary,.btn-secondary,.btn-ghost,.btn-danger){transition:none}
+ [data-product-ui] :is(.btn-primary,.btn-secondary,.btn-ghost,.btn-danger):active:not(:disabled){transform:none}
+}

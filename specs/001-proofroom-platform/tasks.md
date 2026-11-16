@@ -250,3 +250,17 @@ M39验收：`platform` + `galleries` + `action-placement` 共 23 项 7.9 分钟 
 - [x] T149 客户页的「挑选你喜欢的作品（最多15张）」原来夹在预算、时间这类问题中间，它问的其实是「下面作品区你挑了几张」，客户读到它时作品区还在两屏之外。改为渲染时把作品题固定排到最后：`public.tsx` 加 `askQuestions`（非作品题按原顺序 + 作品题放末位），渲染入口从 `cfg.questionnaire.value.questions.map` 换成 `askQuestions.map`；只改显示顺序，问卷版本、答案键、草稿快照、提交载荷全部沿用原 id，历史咨询与 `CU02` 的兼容迁移不受影响。间距不新增任何规则——作品题沿用 `.public-question` 的 `padding:0 0 20px` 与 `border-bottom:1px`，父级 `.form-stack` 的 `gap:18px` 同时管住「它与上一题」和「它与作品区」，`#portfolio` 的 `border-top` 实测 `0px`，所以只有一条线 + 18px。问卷设置页配合：作品选题不再显示上移/下移（已不参与排序），hint 补「客户页固定排在问卷最后、紧贴作品区，不参与这里的排序」
 
 M40验收：T149 单跑 `1 passed (1.5s)`；反向验证——把渲染入口改回 `cfg.questionnaire.value.questions.map`，同一条用例 `1 failed`（`portfolioIndex` 不在末位），恢复后 `1 passed`；`presales` 全量 8 项 47.2 秒全过；`presales + interface-feedback` 中 T149/T108×2/T143/T144 `5 passed (13.7s)`（既有 T108 本就断言「最后一个 `.public-question` 在 `#portfolio` 之前」，不改也照过，构成第二处独立证据）。Web `tsc --noEmit` exit 0、`git diff --check` 通过。详见 acceptance.md M40。
+
+### M41 · 按苹果产品体验收口客户与摄影师两端（2026-11-16）
+
+根proofroom@agent/proofroom-local-main(f1b548f)，工作区在本批前干净；只动 web 3 个源码文件（`public.tsx`、`projects.tsx`、`globals.css`），全部新规则限定在 `[data-product-ui]` 作用域内，因此 `/studio/platform` 平台后台（`ProductExperience active={path!=='/studio/platform'}`，不带该属性）一条都不命中。API/worker/packages、接口与数据不动，不重启服务、不部署。
+
+- [x] T150 客户首屏从「只有标题和一段被截断的简介」改成一条可执行的路径：`.public-hero` 由两列 grid 改为单列 flex（`align-items:flex-start`），标题 `clamp(28px,3.4vw,44px)/1.22`、简介 `max-width:60ch`、动作行 `margin-top:26px`；新增 `.hero-actions` 内 `<a class="btn-primary hero-cta" href="#inquiry-form">填写拍摄咨询</a>`（48px 高胶囊，手机 `flex:1` 撑满）。同时把「了解工作室」从条件渲染（`description.length>100||name.length>24`）改为常驻次要动作——简介本身带 `-webkit-line-clamp:2`，被截断时原来反而没有查看全文的入口，改后截断处始终有去处
+- [x] T151 项目详情 tab 上方的身份行由 `姓名 · 微信 {wechat}` 改为 `姓名 · {当前阶段}`：姓名与微信在下方身份卡里已经各出现一次，这行改成阶段后既不重复又回答了「这一单现在到哪一步」；`p.name` 仍在，T060 断言的 `预约客户` 保留
+- [x] T152 空态就是空态：`.card.card-pad:empty`、`.list-end:empty` 直接 `display:none`。咨询列表空态原来在 `.empty` 虚线条下方还留着 50px 的空卡片和 56px 的空分页尾巴（`inquiries.tsx` 无条件渲染 `section.card.card-pad` 与 `div.list-end`），本轮不动 JSX，只在产品层隐藏
+- [x] T153 反馈状态统一：`btn-*` 按下 `scale(.97)`（`.14s`），禁用态 `opacity:.4` 且去阴影，`prefers-reduced-motion` 下全部关掉。访问码页「验证并进入」在 `pin.length!==4` 时由 `.4` 透明度给出可读的「还差一步」，不再和可用态同色
+- [x] T154 客户访问码页：主按钮撑满卡片（覆盖 `.form-stack>.btn-primary{align-self:flex-start}`）、`#client-pin` 四位码 `21px/.26em` 字距（实测 4 位宽 76px、输入框 316px，不溢出）、`.client-brand-clamped>span` 补 `display:block` 修掉「PROOFROOM」与「你的拍摄项目」粘连、桌面卡片下移 `clamp(24px,9vh,88px)` 让单点任务落在视线内
+- [x] T155 客户空间桌面阅读行宽：`@media(min-width:900px)` 下 `.client-space` 的直接子块收在 760px 居中，含 `.photo-manager` 的块用 `:not(:has(.photo-manager))` 排除、保持原宽。实测注入探针：普通卡片 `w=760,x=260`，含照片管理器的块 `w=1200,x=40`
+- [x] T156 上传区只留一个入口：`.upload-drop>.file-input` 收成 1px 透明（`focus-within` 时给 label 焦点环，`setInputFiles` 照常可达），手机隐藏 `.upload-drop:has(>.file-input)>p`（「也可以将文件拖到此处」在触屏上是噪音，原生「选择文件 未选择任何文件」也不再和「选择作品文件」按钮重复）
+
+M41验收：`presales + interface-feedback` 46 项 3.9 分钟 `46 passed`；`simplified-experience` 7 项 1.9 分钟 `7 passed`（含 T060 在 320/390/393/1280 的 `预约客户` 断言）；`platform` 2 项 1.1 分钟 `2 passed`（后台未受影响的直接证据）；`action-placement` 17 项 1.9 分钟 `17 passed`；`selection -g "CU04-07"` `1 passed (18.0s)`（隐藏 file 控件后上传链路仍通）。Web `tsc --noEmit` exit 0；改动文件 eslint `0 errors / 4 warnings`（均为既有 `set-state-in-effect` 与 `no-img-element`）；`git diff --check` 干净；11 条工作台路由 × 390/1280 复跑无横向溢出。详见 acceptance.md M41。

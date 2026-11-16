@@ -602,3 +602,37 @@ expect(m.overflowX).toBe(0);
 - `presales` 全量 8 项 47.2 秒全过；`presales + interface-feedback` 中 T149/T108×2/T143/T144 `5 passed (13.7s)`。
 - Web `tsc --noEmit` exit 0、`git diff --check` 通过。
 - 未纳入本轮证据：作品区超出一屏时的锚点滚动定位（只覆盖 `#portfolio` 锚点链接这一条路径）、iOS Safari 真机软键盘弹起后的可视区。
+
+## M41 · 按苹果产品体验收口客户与摄影师两端
+
+范围：客户公开页、客户项目空间、摄影师工作台。`/studio/platform` 平台后台不动——`ProductExperience` 只在 `path!=='/studio/platform'` 时挂 `data-product-ui`，本轮每条新规则都带 `[data-product-ui]` 前缀，后台不带该属性，天然不命中。
+
+### 改了什么
+
+| 位置 | 改前 | 改后 |
+| --- | --- | --- |
+| 客户首屏 | 只有标题 + 两行被 `line-clamp` 截断的简介，右侧 400px 空着，没有任何下一步入口 | `.public-hero` 改单列 flex，加 48px 胶囊主按钮「填写拍摄咨询」（锚到 `#inquiry-form`）；「了解工作室」由条件渲染改为常驻 |
+| 项目详情身份行 | `小满 · 微信 xiaoman_1212`，与卡片内信息重复 | `小满 · 等待原片`，这行改为回答「现在到哪一步」 |
+| 咨询列表空态 | `.empty` 虚线条下还挂着 50px 空卡片 + 56px 空分页尾巴 | `.card.card-pad:empty` / `.list-end:empty` 隐藏 |
+| 按钮 | 按下无反馈；禁用态只改背景色，和可用态接近 | `:active scale(.97)`；`:disabled opacity:.4` 且去阴影；reduced-motion 全关 |
+| 客户访问码页 | 主按钮不撑满、品牌主副标题粘连、桌面卡片贴在顶部 | 按钮撑满、`#client-pin` 四位码 `21px/.26em`、副标题 `display:block`、桌面 `margin-block:clamp(24px,9vh,88px)` |
+| 客户空间桌面 | 卡片横跨 1012px，一行字占满整屏 | 760px 居中；含 `.photo-manager` 的块保持全宽 |
+| 作品上传区 | 「选择作品文件」按钮 + 原生「选择文件 未选择任何文件」 + 「也可以将文件拖到此处」三重入口 | 原生控件收成 1px 透明，手机隐藏拖拽提示 |
+
+### 收口前的实测数字
+
+- 首屏（1280×640）：改前简介 `-webkit-line-clamp:2` 截断、动作区为空；改后 `.hero-actions` 高 48px，主按钮 216px 宽，次要动作与主按钮同一基线。
+- 访问码四位码宽度：`font:21px letter-spacing:.26em` 下「0000」实测 76px，输入框内宽 316px，余量 240px，不溢出；手机 390 下按钮与卡片同宽（318px）。
+- 客户空间相邻块宽度：注入探针实测普通卡片 `w=760 x=260`、含 `.photo-manager` 的块 `w=1200 x=40`，`--client-measure` 没有把照片区一起收窄。
+- 保存条与底部导航：作品页/问卷页滚到底后 `.save-bar` 位于 `654..724`、`.mobile-nav` 起始 `770`，实心内容最后一块 `bottom=686`，三者不重叠；`portfolio` 页的保存条是文档流内元素（滚动后 `top=151`），同样不压内容。
+- 回退检查：11 条工作台路由 × 390/1280 复跑，`scrollWidth-innerWidth` 全为 0。
+
+### 本地实际验证
+
+- `presales + interface-feedback` 46 项 `46 passed (3.9m)`。
+- `simplified-experience` 7 项 `7 passed (1.9m)`，含 T060 在 320/390/393/1280 四档对 `预约客户` 的断言与「无横向溢出」。
+- `platform` 2 项 `2 passed (1.1m)`，后台未受影响。
+- `action-placement` 17 项 `17 passed (1.9m)`，含 T141 全站 placeholder 与 T121 手机胶囊。
+- `selection -g "CU04-07"` `1 passed (18.0s)`：file 控件被收成 1px 后，`setInputFiles` 与真实上传链路仍通。
+- Web `tsc --noEmit` exit 0；`eslint public.tsx projects.tsx` `0 errors / 4 warnings`（既有 `set-state-in-effect` 与 `no-img-element`，本轮未新增）。
+- 未纳入本轮证据：iOS Safari 真机软键盘与 `env(safe-area-inset-bottom)` 的实际取值、客户 P2 阶段真实照片网格在 760px 版心旁的对齐观感（只用注入探针验证了 `:has()` 排除生效）、`prefers-reduced-motion` 在真机上的表现（只有 CSS 与既有 T110 用例覆盖）。
