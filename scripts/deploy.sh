@@ -71,6 +71,7 @@ log_user 1
 spawn rsync {*}$extra -az --delete --checksum --itemize-changes \
   --exclude=node_modules --exclude=.next --exclude=.next-* \
   --exclude=dist --exclude=logs --exclude=.git --exclude=.env --exclude=.local \
+  --exclude=.deploy-backup \
   --exclude=upstream --exclude=playwright-report --exclude=test-results \
   --exclude=tsconfig.tsbuildinfo --exclude=.DS_Store --exclude=._* --exclude=*.tgz \
   -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o PubkeyAuthentication=no -o PreferredAuthentications=password -o ConnectTimeout=20" \
@@ -122,7 +123,7 @@ elif git rev-parse --git-dir >/dev/null 2>&1; then
   GIT_BRANCH="${PROOFROOM_GIT_BRANCH:-$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null | sed 's|^[^/]*/||')}"
   [ -n "$GIT_BRANCH" ] || GIT_BRANCH="$(git branch --show-current)"
   [ -n "$GIT_BRANCH" ] || die "当前处于 detached HEAD，请用 PROOFROOM_GIT_BRANCH 指定分支"
-  git push -u "$GIT_REMOTE" "HEAD:$GIT_BRANCH" || die "GitHub 推送失败（网络不通可用 --skip-git）"
+  git push "$GIT_REMOTE" "HEAD:$GIT_BRANCH" || die "GitHub 推送失败（网络不通可用 --skip-git）"
   printf '   已推送 %s/%s @ %s\n' "$GIT_REMOTE" "$GIT_BRANCH" "$(git rev-parse --short HEAD)"
 else
   say "不是 git 仓库，跳过 GitHub 推送"
