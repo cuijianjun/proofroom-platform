@@ -725,3 +725,55 @@ body{font-size:16px;line-height:1.6}h1{font-size:clamp(1.5rem,3vw,2rem)}h2{font-
  [data-product-ui] .mine-row,[data-product-ui] .mine-row>svg,[data-product-ui] .mine-todo,[data-product-ui] .mine-progress-track>i,[data-product-ui] .nav-icon{transition:none}
  [data-product-ui] .mine-todo:active{transform:none}
 }
+
+/* M30 · 反馈位置、折叠动效、勾选框尺寸与列表骨架 */
+@media(max-width:767px){
+ /* 提交成功不再停在页首：贴底浮在底部导航之上，DOM 位置与 role=status 不变。 */
+ [data-product-ui] .notice.success[data-action-ack]{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:26;margin:0;padding:12px 16px;border:1px solid #1f7a4d33;border-left:3px solid var(--color-success-fg);border-radius:13px;background:var(--color-surface);color:var(--color-success-fg);box-shadow:0 12px 32px #22201d1f;font-size:13px;line-height:1.5;pointer-events:none;animation:ack-dock .26s cubic-bezier(.2,.8,.2,1) both,ack-fade .32s ease 4s forwards}
+}
+@keyframes ack-dock{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes ack-fade{to{opacity:0;transform:translateY(4px)}}
+
+/* 折叠项：头部统一 44px 触区，箭头随开合旋转，支持时用高度过渡代替瞬时展开。 */
+[data-product-ui] summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;list-style:none;touch-action:manipulation}
+[data-product-ui] summary::-webkit-details-marker{display:none}
+[data-product-ui] summary::after{content:'';width:7px;height:7px;flex:0 0 7px;margin-left:auto;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;opacity:.45;transform:rotate(45deg) translateY(-2px);transition:transform .2s ease,opacity .2s ease}
+[data-product-ui] details[open]>summary::after{transform:rotate(-135deg) translateY(-2px);opacity:.8}
+[data-product-ui] .project-tools>summary::after{content:'⌄';width:auto;height:auto;margin-left:8px;border:0;opacity:1;transform:none}
+@supports (interpolate-size:allow-keywords){
+ [data-product-ui]{interpolate-size:allow-keywords}
+ [data-product-ui] details::details-content{block-size:0;overflow:hidden;transition:block-size .28s cubic-bezier(.2,.8,.2,1),content-visibility .28s allow-discrete}
+ [data-product-ui] details[open]::details-content{block-size:auto}
+}
+
+/* 勾选框视觉放大到 22px，点击区域仍由 44px 的 label 承担。 */
+@media(max-width:767px){
+ [data-product-ui] input[type=checkbox],[data-product-ui] input[type=radio]{width:22px;height:22px;flex:0 0 22px;margin:0;accent-color:var(--color-brand)}
+ [data-product-ui] .check-line{gap:10px}
+}
+
+/* 列表首屏骨架：形状先行，避免弱网下只剩居中转圈。 */
+[data-product-ui] .list-skeleton{display:flex;flex-direction:column;gap:10px;padding:2px 0}
+[data-product-ui] .skeleton-row{display:block;height:76px;border-radius:14px;background:linear-gradient(100deg,var(--color-surface-2) 28%,#fbf7f2 46%,var(--color-surface-2) 64%);background-size:220% 100%;animation:skeleton-sweep 1.3s ease-in-out infinite}
+@keyframes skeleton-sweep{from{background-position:120% 0}to{background-position:-20% 0}}
+
+/* 空态：把散落的符号收进圆形底片，第一眼先看到"这里该有什么"。 */
+@media(max-width:767px){
+ [data-product-ui] .empty{padding:44px 18px;gap:12px}
+ [data-product-ui] .empty-icon{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--color-surface-2);font-size:22px;line-height:1;opacity:1}
+}
+
+/* 精修张数步进：44px 加减键夹住原输入框。 */
+[data-product-ui] .quota-stepper{display:flex;align-items:center;gap:8px;max-width:220px}
+[data-product-ui] .quota-stepper>.input{flex:1 1 auto;min-width:0;text-align:center;font-variant-numeric:tabular-nums}
+[data-product-ui] .quota-stepper>.input::-webkit-outer-spin-button,[data-product-ui] .quota-stepper>.input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+[data-product-ui] .quota-step{width:44px;height:44px;flex:0 0 44px;display:grid;place-items:center;padding:0;border:1px solid var(--color-line-2);border-radius:11px;background:var(--color-surface);color:var(--color-pine);font-size:19px;font-weight:600;line-height:1;transition:background-color .16s ease,transform .16s ease}
+[data-product-ui] .quota-step:active:not(:disabled){background:var(--color-surface-2);transform:scale(.95)}
+[data-product-ui] .quota-step:disabled{opacity:.4}
+
+@media(prefers-reduced-motion:reduce){
+ [data-product-ui] .notice.success[data-action-ack]{animation:none}
+ [data-product-ui] .skeleton-row{animation:none}
+ [data-product-ui] summary::after,[data-product-ui] .quota-step{transition:none}
+ [data-product-ui] .quota-step:active:not(:disabled){transform:none}
+}
