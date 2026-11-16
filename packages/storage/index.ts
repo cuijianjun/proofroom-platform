@@ -4,7 +4,7 @@ import {createReadStream} from 'node:fs';
 import {stat} from 'node:fs/promises';
 export const bucket=process.env.S3_BUCKET??'proofroom-local';
 let instance:S3Client|undefined;
-const client=()=>instance??=new S3Client({endpoint:process.env.S3_ENDPOINT,region:'us-east-1',forcePathStyle:true,requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED',credentials:{accessKeyId:process.env.S3_ACCESS_KEY??'',secretAccessKey:process.env.S3_SECRET_KEY??''},maxAttempts:2});
+const client=()=>instance??=new S3Client({endpoint:process.env.S3_ENDPOINT,region:'us-east-1',forcePathStyle:process.env.S3_FORCE_PATH_STYLE!=='false',requestChecksumCalculation:'WHEN_REQUIRED',responseChecksumValidation:'WHEN_REQUIRED',credentials:{accessKeyId:process.env.S3_ACCESS_KEY??'',secretAccessKey:process.env.S3_SECRET_KEY??''},maxAttempts:2});
 export async function ensureBucket(){try{await client().send(new HeadBucketCommand({Bucket:bucket}),{abortSignal:AbortSignal.timeout(15000)});}catch(e){if((e as {$metadata?:{httpStatusCode?:number}}).$metadata?.httpStatusCode!==404)throw e;await client().send(new CreateBucketCommand({Bucket:bucket}),{abortSignal:AbortSignal.timeout(15000)});}}
 export async function storageHealth(){try{await client().send(new HeadBucketCommand({Bucket:bucket}),{abortSignal:AbortSignal.timeout(4000)});return 'ok' as const;}catch{return 'unavailable' as const;}}
 export async function statObject(key:string){const result=await client().send(new HeadObjectCommand({Bucket:bucket,Key:key}),{abortSignal:AbortSignal.timeout(15000)});if(!Number.isSafeInteger(result.ContentLength)||!result.ContentLength||result.ContentLength<0)throw new Error('存储文件大小无法核对');return {bytes:result.ContentLength!};}
