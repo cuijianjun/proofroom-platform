@@ -191,3 +191,10 @@ M31验收：Chrome 157 渠道下 booking-profile + interface-feedback + presales
 ## M32 · 工作室名展开按钮底色（2026-11-16）
 根proofroom@agent/proofroom-local-main，只动一条产品 CSS 与验收记录；平台后台、API/worker/packages、业务与数据不动，不重启服务、不部署。
 - [x] T134 去掉 `.name-disclosure-toggle` 的 hover/active 底色（原来 `surface-2` 在工作室卡片上呈一块可见方块），只保留颜色反馈，并清掉多余的 `border-radius`
+
+## M33 · 刷新入口随下拉刷新统一下线（2026-11-16）
+根proofroom@agent/proofroom-local-main(fda995a)，只动外部产品页 8 个 feature 与 3 个 e2e 用例；平台后台、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+- [x] T135 产品层已全局具备下拉刷新（`PageRefresh` 汇总 `useResource`/`useCursorWindow` 注册的读），因此删除 8 个产品页里 10 个重复的"手动刷新"入口：刷新工作台、刷新咨询（连同只剩它的"更多咨询列表操作"菜单）、刷新图库列表、读取最新图库照片、刷新日程、刷新历史、刷新备份记录、刷新工作室状态与额度、刷新下载状态、刷新精修预览；同时清掉 4 个已无用的 import 与 1 处无用解构。保留的例外各有技术理由：`/studio/platform` 因 `ProductExperience active={false}` 没有下拉刷新、客户公开页 `client.tsx` 是未登录侧的兜底、`ZipCard` 的"正在准备下载…"与打包状态节流入口共位、时段表单的"重新读取时段"是可用性查询而非刷新
+- [x] T136 用例随入口下线改写：action-placement 原 T113/114 重写为 T135（断言页面上不存在任何以"刷新"开头的按钮、不存在只含刷新项的"更多*操作"菜单，同时核对主操作可见与零写入）；interface-feedback T081 改由 `ZipCard` 1400ms 自动轮询推进下载、T094 末段改下拉刷新触发 503 失败态并更新标题措辞；booking-profile T069 改下拉刷新读取新增时段；另把 action-placement T117 的渐隐采样从固定 45ms 改为逐帧等到首个中间值，消除过渡未启动时采到 opacity 1 的抖动
+
+M33验收：受影响增量 action-placement + backups + galleries + interface-feedback + presales + booking-profile 共 77 项 13.3 分钟全过（`77 passed`）；root/Web `tsc --noEmit`、`check-architecture.mjs`、改动文件 eslint（0 errors / 9 条既有 warning）、`git diff --check` 均通过。真实 Chrome 390×852 实测 6 个受影响页面 `刷新*` 按钮为空、`scrollWidth==innerWidth`、下拉返回 `已刷新`。详见acceptance.md M33。

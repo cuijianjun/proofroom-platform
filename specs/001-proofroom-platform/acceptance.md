@@ -217,3 +217,40 @@ T134完成。承接M31的 Chrome 复测，修一处视觉缺陷：`我的工作�
 同类位置一致性：客户页 `.client-brand-toggle`、项目页同一 `.name-disclosure-toggle` 共用此规则，改一处全部收敛，无残留底色。
 实测（Chrome 157 渠道，390×852）：静止/悬停/点开三态 `background-color` 均为 `rgba(0,0,0,0)`，悬停态 `color` 变为 `rgb(138,90,59)`，展开态箭头朝上；44px 触区与 18px 箭头未变。
 回归：action-placement + booking-profile 共 31 项 2.3 分钟全过；`git diff --check` 干净。不扩称其它宽度或真机。
+
+## M33 · 刷新入口随下拉刷新统一下线 · 2026-11-16
+T135/T136完成。产品层从 M29 起就有下拉刷新：`PageRefresh` 在 `scrollY<=0` 时接手触摸/滚轮手势，把 `useResource`（默认 `globalRefresh=true`）与 `useCursorWindow` 注册进 `registry.reads` 的读一次性重跑。既然每一页的读都能被下拉触发，页面上再留一个"手动刷新"按钮就是同一动作的第二个入口，本轮把它们全部清掉。
+
+| 页面 | 删掉的入口 | 原位置 |
+| --- | --- | --- |
+| 工作台 | 刷新工作台 | 标题右侧 |
+| 咨询 | 更多咨询列表操作 → 刷新咨询 | 标题右侧菜单（菜单只剩刷新，整段移除） |
+| 项目图库 | 更多图库列表操作 → 刷新图库列表 | 列表标题右侧菜单 |
+| 项目图库 | 读取最新图库照片 | 图库照片管理区菜单（菜单只留"切换列表/网格"） |
+| 预约日程 | 更多日程操作 → 刷新日程 | 卡片标题右侧菜单 |
+| 搜索历史 | 更多历史操作 → 刷新历史 | 搜索按钮旁菜单 |
+| 帮助与数据 | 刷新工作室状态与额度 | "当前工作室"标题右侧 |
+| 交付与下载 | 刷新下载状态 | "源文件下载"标题右侧 |
+| 交付与下载 | 刷新精修预览 | "精修预览"标题右侧 |
+
+刻意保留的四处及理由：
+
+| 保留项 | 为什么不删 |
+| --- | --- |
+| `/studio/platform` 的刷新运行状态、刷新账号状态 | 该路由 `ProductExperience active={false}`（application.tsx:29），整页没有下拉刷新，删了就没有刷新手段 |
+| 客户公开页 `client.tsx` 的刷新项目进度 | 客户侧未登录、不挂产品层，是访客自己的兜底入口 |
+| `ZipCard` 的"正在准备下载…" | 与"刷新{原片|精修}打包状态"共用同一按钮位：打包中是状态节流入口，就绪后立刻变下载按钮；状态本身另有 1400ms 自动轮询 |
+| 时段表单的"重新读取时段" | 语义是查询此刻可用性（带 `open` 条件），不是刷新页面数据 |
+
+改写与验证：
+- action-placement 原 T113/114 的前提（"更多*操作"菜单里应有刷新项）被本轮删除，重写为 T135：遍历工作台/咨询/图库/日程/历史/帮助 6 条路由 × 320/1440 两档，断言 `getByRole('button',{name:/^刷新/})` 计数为 0、含"刷新"的"更多*操作"菜单为 0、主操作仍可见、整页 `scrollWidth<=width`，并统计整轮非 GET/HEAD 请求为 0（只读）。
+- interface-feedback T081：原来靠点"刷新下载状态"把 `ready` 推进到 UI，按钮删掉后改为让 `ZipCard` 的 1400ms 轮询自己接上——这反而是真实路径。断言不变（只下载一次、403 后 `downloads` 仍为 1）。
+- interface-feedback T094：末段"点刷新工作台触发 503"改为在 `.status-cards` 上下拉，标题里的 "and the refresh button" 一并删掉。
+- booking-profile T069：原来 `更多日程操作 → 刷新日程` 才能看到后台新建的历史时段，改为在 `#main` 上下拉，并等 `page-refresh-feedback` 到 `done` 再断言。
+- action-placement T117：`expect(during.opacity).toBeLessThan(1)` 曾偶发收到 `1`——160ms 渐隐的起点帧数不固定，固定等 45ms 会采到过渡还没启动的初值。改为逐帧等到第一个 `<1` 的中间值再取快照，语义（渐隐而非硬切）不变。
+
+本地实际验证：Playwright 走真实 Chrome 渠道、单 worker、retries 0，固定 Node22 复用 18186/18184，未重启/build/typegen。
+- 受影响增量 action-placement + backups + galleries + interface-feedback + presales + booking-profile 共 77 项，13.3 分钟全过（`77 passed`）。
+- root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 边界通过；改动 11 个文件 eslint `0 errors, 9 warnings`（均为既有 `react-hooks/set-state-in-effect` 等）；`git diff --check` 干净。
+- 真实 Chrome 390×852 探针：6 个受影响页面 `刷新*` 按钮为空、`documentElement.scrollWidth==innerWidth==390` 无横向溢出；滚轮上滑触发下拉得到 `{state:'done',text:'已刷新'}`，1.4s 后反馈消失，说明下拉确实覆盖了被删按钮的职责。
+- 截图目视确认工作台标题右侧、预约日程卡片标题右侧均无空位，排版不下塌。不扩称微信/手机真机、系统输入法或生产验收。
