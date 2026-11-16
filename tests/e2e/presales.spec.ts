@@ -33,3 +33,35 @@ test('UI36: public and configuration layouts fit narrow phones and desktop',asyn
 test('CU03/UX05: a successful submission with lost response is recovered after refresh without another inquiry or PIN draft',async({page,browser})=>{const {sid,slug}=await seed(page);await openConsultation(page.request,sid);const guest=await browser.newContext({baseURL:'http://127.0.0.1:18186'}),customer=await guest.newPage();await customer.goto(`/t/${slug}`);await customer.getByLabel('怎么称呼你？ *',{exact:true}).fill('响应丢失验收');await chooseOption(customer.getByLabel('想拍什么类型的照片？ *',{exact:true}), '个人写真');await customer.getByLabel('你的微信号',{exact:true}).fill('lost-response-client');await customer.getByLabel('项目访问码（四位数字）',{exact:true}).fill('7294');await customer.route(`**/api/v1/public/${slug}/inquiries`,async route=>{const response=await route.fetch();expect(response.status()).toBe(200);await route.abort('failed');});await customer.getByRole('button',{name:'提交拍摄咨询',exact:true}).click();await expect(customer.getByRole('status').filter({hasText:'提交结果尚未确认'})).toBeVisible();const draft=await customer.evaluate(slug=>JSON.parse(sessionStorage.getItem(`proofroom:public:${slug}`)!),slug);expect(draft.pin).toBeUndefined();expect(draft.recoveryKey).toBeUndefined();expect(await customer.evaluate(()=>document.cookie)).not.toContain('proofroom_inquiry');customer.on('dialog',d=>d.accept());await customer.reload();await customer.getByRole('button',{name:'恢复问卷草稿',exact:true}).click();await expect(customer.getByRole('heading',{name:'咨询提交成功'})).toBeVisible();const c=new pg.Client({connectionString:config.TEST_MIGRATION_DATABASE_URL});await c.connect();try{expect((await c.query('select id from inquiries where studio_id=$1 and wechat=$2',[sid,'lost-response-client'])).rowCount).toBe(1);}finally{await c.end();await guest.close();}});
 
 test('UI25: a failed file PUT remains retryable after metadata refresh and keeps one server item',async({page})=>{const {sid}=await seed(page);await page.goto(`/studio/portfolio?studio=${sid}`);const bytes=await sharp({create:{width:80,height:60,channels:3,background:'pink'}}).jpeg().toBuffer();const pattern=`**/api/v1/studios/${sid}/portfolio/*/bytes`;await page.route(pattern,route=>route.abort('failed'));await page.getByLabel('选择作品文件',{exact:true}).setInputFiles({name:'retry-reference.jpg',mimeType:'image/jpeg',buffer:bytes});const retry=page.getByRole('button',{name:'重试上传 retry-reference.jpg',exact:true});await expect(retry).toBeVisible();await expect(page.locator('.portfolio-item')).toContainText('等待上传文件');await expect(retry).toBeVisible();await page.unroute(pattern);await retry.click();await expect(page.locator('.portfolio-item')).toContainText('压缩预览已就绪',{timeout:20000});await expect(page.locator('.upload-queue')).toContainText('压缩预览已就绪');const result=(await (await page.request.get(`/api/v1/studios/${sid}/portfolio`)).json()).data;expect(result.items.filter((i:any)=>i.filename==='retry-reference.jpg')).toHaveLength(1);});
+
+test('T149: the portfolio question sits last, right above the works section, on the same divider rhythm',async({page})=>{
+ const {slug}=await seed(page);
+ for(const width of [320,390]){
+  await page.setViewportSize({width,height:852});await page.goto('/t/'+slug);await expect(page.getByRole('heading',{name:'作品与风格',exact:true})).toBeVisible();
+  const m=await page.evaluate(()=>{
+   const round=(n:number)=>Math.round(n*100)/100,questions=[...document.querySelectorAll('.public-question')],section=document.querySelector('#portfolio')!;
+   const box=(el:Element)=>el.getBoundingClientRect(),cs=(el:Element)=>getComputedStyle(el);
+   const gaps=questions.slice(1).map((el,i)=>round(box(el).top-box(questions[i]).bottom));
+   const last=questions.at(-1)!;
+   return {
+    lastIsPortfolio:last.textContent!.includes('挑选你喜欢的作品'),
+    lastAboveWorks:!!(last.compareDocumentPosition(section)&Node.DOCUMENT_POSITION_FOLLOWING),
+    portfolioIndex:questions.findIndex(el=>el.textContent!.includes('挑选你喜欢的作品')),
+    questionCount:questions.length,
+    gapBeforeLast:gaps.at(-1),otherGaps:gaps.slice(0,-1),
+    gapToWorks:round(box(section).top-box(last).bottom),
+    lastBorderBottom:cs(last).borderBottomWidth,
+    sectionBorderTop:cs(section).borderTopWidth,
+    overflowX:document.documentElement.scrollWidth-innerWidth,
+   };
+  });
+  // 作品选题固定最后：它前面还有称呼、类型、预算、时间、在意、避免、联系这些题，位置不能回到中间。
+  expect(m.lastIsPortfolio).toBe(true);expect(m.lastAboveWorks).toBe(true);
+  expect(m.portfolioIndex).toBe(m.questionCount-1);expect(m.questionCount).toBeGreaterThan(2);
+  // 分割线节奏：它和上一题、和作品区之间都只隔一处 18px 的题间距，不叠出第二条线。
+  expect(m.gapBeforeLast).toBe(18);expect(m.gapToWorks).toBe(18);
+  expect([...new Set(m.otherGaps)]).toEqual([18]);
+  expect(m.lastBorderBottom).toBe('1px');expect(m.sectionBorderTop).toBe('0px');
+  expect(m.overflowX).toBe(0);
+ }
+});

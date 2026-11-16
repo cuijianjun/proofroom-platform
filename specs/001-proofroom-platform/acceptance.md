@@ -559,3 +559,46 @@ expect({goneForm,goneCards}).toEqual({goneForm:0,goneCards:0});
 - `interface-feedback` 全量 38 项见提交说明；T146/T147 单跑均通过。
 - Web `tsc --noEmit`、改动文件 eslint（0 errors，仅既有 `react-hooks/set-state-in-effect` 与 `no-img-element` 警告）、`git diff --check` 通过。
 - 未纳入本轮证据：iOS Safari 真机软键盘图标（用 `enterKeyHint=search` 的语义断言替代）、搜索建议/联想（产品未要求）。
+
+## M40 · 作品选题挪到问卷最后、紧贴作品区（2026-11-16）
+
+### 问题：问「挑了哪几张」的问题，离作品区两屏远
+
+默认问卷里 `q5` 是 `type==='portfolio'` 的「挑选你喜欢的作品（最多15张）」，排在预算、时间之后，「你最在意哪些方面」之前。它问的其实就是「下面那个作品区你挑了几张」，但客户读到它时作品区还没出现，只能先去找、回来再答。问卷设置页还给它留了上移/下移，工作室排序一动就可能把它推得更前。
+
+### 改法：渲染时排到末位，不碰数据
+
+`public.tsx` 加一行 `askQuestions`：非作品题按原顺序 + 作品题放最后，渲染入口从 `cfg.questionnaire.value.questions.map` 换成 `askQuestions.map`。
+
+```tsx
+const askQuestions=[...(cfg?.questionnaire.value.questions??[]).filter(q=>q.type!=='portfolio'),
+                    ...(cfg?.questionnaire.value.questions??[]).filter(q=>q.type==='portfolio')];
+```
+
+只改显示顺序：问卷版本、答案键（`answers[q.id]`）、草稿快照、提交载荷全部沿用原 id，所以历史咨询、草稿恢复、`CU02` 的兼容迁移都不受影响。设置页把作品选题的上移/下移隐藏（`q.type!=='portfolio'&&<>…</>`），并让它的 hint 说明「客户页固定排在问卷最后、紧贴作品区，不参与这里的排序」，免得工作室以为还能调。
+
+### 分割线：不新增规则，靠既有节奏自然接上
+
+没有为「作品题和作品区之间」写任何新的 `margin`/`border`。作品题仍是 `.public-question`（`padding:0 0 20px` + `border-bottom:1px`），父级 `.inquiry-form > .form-stack` 的 `gap:18px` 同时管住两段距离——上一题到它、它到 `#portfolio`，都是 18px。`#portfolio` 自己的 `border-top:1px` 被 `[data-product-ui] .inquiry-form .public-section` 的 padding 覆写吃掉，实测 `borderTopWidth` 为 `0px`，所以视觉顺序是「一条线 → 18px → 作品区标题」，不会叠出双线，也不会留出一大块空白。
+
+T149 把这些钉成数字（320/390 两档）：
+
+```ts
+expect(m.lastIsPortfolio).toBe(true); expect(m.lastAboveWorks).toBe(true);
+expect(m.portfolioIndex).toBe(m.questionCount-1);
+expect(m.gapBeforeLast).toBe(18); expect(m.gapToWorks).toBe(18);
+expect([...new Set(m.otherGaps)]).toEqual([18]);   // 其它题之间也是同一节奏，不搞特例
+expect(m.lastBorderBottom).toBe('1px'); expect(m.sectionBorderTop).toBe('0px');
+expect(m.overflowX).toBe(0);
+```
+
+反向验证：把渲染入口改回 `cfg.questionnaire.value.questions.map`，同一条用例 `1 failed`（`portfolioIndex` 不在末位）；恢复后 `1 passed`。既有 `interface-feedback` T108 本来就断言「最后一个 `.public-question` 在 `#portfolio` 之前」，这条用例不改也照过，等于两处独立证据指向同一顺序。
+
+实测（390×844）：题目实际顺序为称呼 → 类型 → 预算 → 时间 → 联系方式 → 作品选题，`portfolioIsLast:true`、`gapToWorks:18`、`gapPrevToLast:18`、`docOverflowX:0`；桌面 1280 下作品块宽 720、作品区宽 1120，`gapBeforeLast`/`gapToWorks` 同样 18px。
+
+### 本地实际验证
+
+- T149 单跑 `1 passed (1.5s)`；反向改回旧顺序 `1 failed`，恢复后 `1 passed`。
+- `presales` 全量 8 项 47.2 秒全过；`presales + interface-feedback` 中 T149/T108×2/T143/T144 `5 passed (13.7s)`。
+- Web `tsc --noEmit` exit 0、`git diff --check` 通过。
+- 未纳入本轮证据：作品区超出一屏时的锚点滚动定位（只覆盖 `#portfolio` 锚点链接这一条路径）、iOS Safari 真机软键盘弹起后的可视区。

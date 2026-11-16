@@ -242,3 +242,11 @@ T145 完成。M37 之后把 `/`、`/studio/login`、`/studio/register`、`/studi
 - [x] T148 顺带修掉 `platform.spec.ts` 的既有红：另一标签页登录后平台页靠 BroadcastChannel 重新校验账号，无头浏览器里后台页的消息会滞后，改为先 `bringToFront()` 再给 800ms 沉淀；该用例在 HEAD `8f6206f` 上 `git stash` 复跑同样失败（`1 failed`），确认与本轮搜索/闪动改动无关，且单跑 3 次稳定通过
 
 M39验收：`platform` + `galleries` + `action-placement` 共 23 项 7.9 分钟 `23 passed`；`interface-feedback` 全量见 acceptance.md M39。root/Web `tsc --noEmit`、改动文件 eslint（0 errors）、`git diff --check` 通过。详见 acceptance.md M39。
+
+### M40 · 作品选题挪到问卷最后、紧贴作品区（2026-11-16）
+
+根proofroom@agent/proofroom-local-main(83c6ceb)，工作区在本批前干净；只动 web 2 个源码文件与 1 个 e2e 用例；平台后台接口、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+
+- [x] T149 客户页的「挑选你喜欢的作品（最多15张）」原来夹在预算、时间这类问题中间，它问的其实是「下面作品区你挑了几张」，客户读到它时作品区还在两屏之外。改为渲染时把作品题固定排到最后：`public.tsx` 加 `askQuestions`（非作品题按原顺序 + 作品题放末位），渲染入口从 `cfg.questionnaire.value.questions.map` 换成 `askQuestions.map`；只改显示顺序，问卷版本、答案键、草稿快照、提交载荷全部沿用原 id，历史咨询与 `CU02` 的兼容迁移不受影响。间距不新增任何规则——作品题沿用 `.public-question` 的 `padding:0 0 20px` 与 `border-bottom:1px`，父级 `.form-stack` 的 `gap:18px` 同时管住「它与上一题」和「它与作品区」，`#portfolio` 的 `border-top` 实测 `0px`，所以只有一条线 + 18px。问卷设置页配合：作品选题不再显示上移/下移（已不参与排序），hint 补「客户页固定排在问卷最后、紧贴作品区，不参与这里的排序」
+
+M40验收：T149 单跑 `1 passed (1.5s)`；反向验证——把渲染入口改回 `cfg.questionnaire.value.questions.map`，同一条用例 `1 failed`（`portfolioIndex` 不在末位），恢复后 `1 passed`；`presales` 全量 8 项 47.2 秒全过；`presales + interface-feedback` 中 T149/T108×2/T143/T144 `5 passed (13.7s)`（既有 T108 本就断言「最后一个 `.public-question` 在 `#portfolio` 之前」，不改也照过，构成第二处独立证据）。Web `tsc --noEmit` exit 0、`git diff --check` 通过。详见 acceptance.md M40。
