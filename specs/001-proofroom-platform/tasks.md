@@ -214,3 +214,9 @@ M34验收：受影响增量 action-placement + galleries + interface-feedback + 
 - [x] T140 interface-feedback T081 的过渡态断言从"按钮可见"改为"文案可见"，并补一条 `.zip-card` 内 `刷新*` 按钮计数为 0 的守卫
 
 M35验收：action-placement 15 项 1.2 分钟全过；delivery + interface-feedback 37 项 2.9 分钟通过（唯一 failed 为 T094 那条已知的后台轮询抖动，单跑 3.9s 通过）；Web `tsc --noEmit`、`git diff --check` 通过，改动 2 文件 eslint 0 errors / 4 条既有 warning。详见 acceptance.md M35。
+
+## M36 · 输入框统一占位提示（2026-11-16）
+根proofroom@agent/proofroom-local-main(9d45bd3)，工作区在本批前干净；只动外部产品 17 个 web 源码文件与 1 个 e2e 用例；平台后台接口、API/worker/packages、业务规则、数据与登录不动，不重启服务、不部署。
+- [x] T141 全站输入框补 `placeholder` 并加一条守卫用例：`apps/web/src` 全部 `<Input>`/`<Textarea>` 与原生可见 `<input>`/`<textarea>` 共 72 处新增占位提示（另把 5 处旧提示改写成同一句式），文案统一为「请输入 + 说明/示例」；公开问卷的单选题下拉空选项由「请选择」改为按题干生成的「请选择想拍什么类型的照片」；`.honeypot` 蜜罐字段例外、不加提示。同时在 `action-placement` 新增同名 T141：390/1440 两档进公开问卷，先断言称呼/微信/访问码/下拉四处的具体文案，再遍历所有可见文本框断言 `placeholder` 非空，同一套审计再跑新建项目/工作室设置/图库列表/历史记录四页（跳过 `.honeypot`）
+
+M36验收：T141 单跑 `1 passed (5.6s)`；受影响六 spec（presales + galleries + interface-feedback + delivery + action-placement + account）共 73 项 6.7 分钟 `72 passed`，唯一 failed 为 `account.spec.ts` UI03/AT39（`git stash` 到 HEAD `9d45bd3` 复跑同样失败，判为既有）。root/Web `tsc --noEmit`、`check-architecture.mjs`、`git diff --check` 通过，18 文件 eslint 0 errors / 25 条既有 warning。详见 acceptance.md M36。

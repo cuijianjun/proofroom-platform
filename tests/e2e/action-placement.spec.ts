@@ -286,3 +286,24 @@ test('T125: copy toasts remain visible in a modal, failures keep manual recovery
  await menu.getByRole('button',{name:'取消',exact:true}).click();await expect(menu).not.toBeVisible();await expect(toast).toHaveCount(0);await trigger.click();
  await page.evaluate(()=>Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:()=>new Promise<void>(resolve=>{(window as any).__resolveClosedToast=resolve;})}}));await copy.click();await menu.getByRole('button',{name:'取消',exact:true}).click();await expect(menu).not.toBeVisible();await page.evaluate(()=>(window as any).__resolveClosedToast());await page.waitForTimeout(200);await expect(toast).toHaveCount(0);await expect(page.locator('dialog[open]')).toHaveCount(0);
 });
+
+test('T141: every visible text field shows a friendly placeholder and required questionnaire hints stay in place',async({page})=>{
+ test.setTimeout(120000);const s=await seed(page);
+ const audit=async(context:string)=>{
+  const fields=page.locator('input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not([type=file]):not([type=color]), textarea');
+  const total=await fields.count();const missing:string[]=[];
+  for(let i=0;i<total;i++){const field=fields.nth(i);if(!await field.isVisible())continue;if(await field.evaluate(el=>!!el.closest('.honeypot')))continue;const placeholder=(await field.getAttribute('placeholder'))?.trim();if(!placeholder)missing.push(await field.evaluate((el:HTMLElement)=>(el as HTMLInputElement).id||el.getAttribute('aria-label')||(el as HTMLInputElement).name||el.outerHTML.slice(0,60)));}
+  expect(missing,`${context} 缺少 placeholder`).toEqual([]);expect(total).toBeGreaterThan(0);
+ };
+ for(const width of [390,1440]){
+  await page.setViewportSize({width,height:900});await page.goto('/t/'+s.slug);await page.getByLabel('怎么称呼你？ *',{exact:true}).waitFor();
+  await expect(page.getByLabel('怎么称呼你？ *',{exact:true})).toHaveAttribute('placeholder','请输入你的称呼，例如：小林');
+  await expect(page.getByLabel('你的微信号',{exact:true})).toHaveAttribute('placeholder','请输入你的微信号，方便摄影师联系你');
+  await expect(page.getByLabel('项目访问码（四位数字）',{exact:true})).toHaveAttribute('placeholder','请输入 4 位数字访问码');
+  await expect(page.getByRole('combobox',{name:'想拍什么类型的照片？ *',exact:true})).toContainText('请选择想拍什么类型的照片');
+  await audit(`公开问卷 ${width}`);
+ }
+ for(const [path,context] of [['/studio/new','新建项目'],['/studio/settings','工作室设置'],['/studio/galleries','图库列表'],['/studio/history','历史记录']] as const){
+  await page.setViewportSize({width:1440,height:900});await page.goto(`${path}?studio=${s.sid}`);await page.waitForLoadState('networkidle');await audit(context);
+ }
+});

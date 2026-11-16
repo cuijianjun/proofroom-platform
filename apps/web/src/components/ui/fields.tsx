@@ -17,7 +17,7 @@ export function ColorField({ name, label, defaultValue = "#111111", swatches = [
       <label htmlFor={id} className="label">{label}</label>
       <div className="flex items-center gap-2">
         <input type="color" aria-label={`${label} picker`} value={valid ? value : "#000000"} onChange={(e) => setValue(e.target.value)} className="h-10 w-12 rounded-lg border border-line-2 bg-surface p-1" />
-        <Input id={id} name={name} value={value} onChange={(e) => setValue(e.target.value.trim())} pattern="^#[0-9a-fA-F]{6}$" className="font-mono w-32" aria-invalid={!valid} />
+        <Input id={id} name={name} placeholder="请输入色值，例如：#1A2B3C" value={value} onChange={(e) => setValue(e.target.value.trim())} pattern="^#[0-9a-fA-F]{6}$" className="font-mono w-32" aria-invalid={!valid} />
         <div className="flex gap-1">
           {swatches.map((s) => (
             <button key={s} type="button" aria-label={`Use ${s}`} onClick={() => setValue(s)} className={cx("h-7 w-7 rounded-full border", value.toLowerCase() === s.toLowerCase() ? "border-ink ring-2 ring-accent/30" : "border-line-2")} style={{ background: s }} />
@@ -41,7 +41,7 @@ export function DateTimeField({ name, label, timeZone, defaultValue, required, h
   return (
     <div>
       <label htmlFor={id} className="label">{label}</label>
-      <Input id={id} type="datetime-local" value={local} onChange={(e) => setLocal(e.target.value)} required={required} step={300} />
+      <Input id={id} type="datetime-local" placeholder="请选择日期与时间" value={local} onChange={(e) => setLocal(e.target.value)} required={required} step={300} />
       <input type="hidden" name={name} value={iso} />
       <p className="hint">{hint ?? `Times are in ${timeZone.replace(/_/g, " ")}.`}</p>
     </div>
@@ -88,7 +88,7 @@ export function MoneyField({ name, label, defaultCents = 0, currency = "USD", re
       <label htmlFor={id} className="label">{label}</label>
       <div className="relative">
         <span className="absolute inset-y-0 left-3 flex items-center text-muted text-sm" aria-hidden>{symbol}</span>
-        <Input id={id} inputMode="decimal" value={text} onChange={(e) => setText(e.target.value)} onBlur={() => valid && setText((cents / 100).toFixed(2))} className="pl-7" required={required} aria-invalid={!valid} {...rest} />
+        <Input id={id} inputMode="decimal" placeholder="请输入金额，例如：199.00" value={text} onChange={(e) => setText(e.target.value)} onBlur={() => valid && setText((cents / 100).toFixed(2))} className="pl-7" required={required} aria-invalid={!valid} {...rest} />
       </div>
       <input type="hidden" name={name} value={valid ? cents : ""} />
       {!valid ? <p className="field-error">Enter an amount.</p> : hint ? <p className="hint">{hint}</p> : null}

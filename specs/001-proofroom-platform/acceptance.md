@@ -315,3 +315,73 @@ T081 断言随之调整：原来断言 `getByRole('button',{name:'正在准备�
 - Web `tsc --noEmit` 通过；改动 2 文件 eslint `0 errors, 4 warnings`（既有 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）；`git diff --check` 干净。
 
 另：用户本轮反馈的「咨询 → 更多咨询列表操作 → 刷新咨询」在 M33（`6d3ede6`）已经删除，源码与 dev 服务当前下发的 `apps_web_src_features_*.js` 中该文案计数均为 0，`action-placement` T135 复跑通过；截图来自改动前的旧页面，重新加载即可看到新界面。
+
+## M36 · 输入框统一占位提示 · 2026-11-16
+T141完成。用户反馈公开问卷的「怎么称呼你？」与「想拍什么类型的照片？」两个输入区只有题干预设、框内空着，客户不知道该怎么填。本轮把**全站**输入框统一补上「请输入 XXXX」式占位提示，客户侧优先、工作台一并对齐。
+
+### 覆盖面与计数
+
+先扫 `apps/web/src`：`<Input>` / `<Textarea>` 组件共 78 处、其中 72 处无 `placeholder`；再单独扫原生 `<input>` / `<textarea>`（排除 `checkbox/radio/file/hidden/range/color`）后，剩余未覆盖的只有组件定义本身与公开问卷的 `.honeypot` 蜜罐。最终新增 **72 处 placeholder**，另改写 5 处旧提示（`history.tsx` 1、`projects.tsx` 搜索框 1、`public.tsx` 意向日期 1、`schedule.tsx` 2）。
+
+| 文件 | 新增 | 覆盖范围 |
+| --- | --- | --- |
+| `features/public.tsx` | 6+1 | 客户公开问卷：称呼、微信号、来源、其他说明、想法、项目访问码 |
+| `features/account.tsx` | 16 | 注册/登录/邀请成员/改密/MFA 启用与禁用/强制改密 |
+| `features/settings.tsx` | 12 | 工作室名与简介、对外微信、问卷题干/提示/选项、套餐名价述、FAQ 问答、额度步进 |
+| `features/project-form.tsx` | 9 | 新建项目：客户称呼/微信/访问码/项目名/精修张数/电话后四位/价格说明/特别约定/日期说明 |
+| `features/galleries.tsx` | 5 | 图库与照片搜索、图库名称、分类、原文件名关键词 |
+| `features/platform.tsx` | 5 | 平台后台：驳回原因、席位与额度上限、工作人员搜索、操作原因 |
+| `features/application.tsx` | 4 | 入伙申请：工作室名、公开页地址（两处表单各一套） |
+| `features/projects.tsx` | 3+1 | 批量取消原因、重置访问码、合作调整原因、列表搜索框（改写） |
+| `features/portfolio.tsx` | 3 | 作品组名称、作品名称、排序位置 |
+| `features/photos.tsx` | 2 | 照片文件名关键词、给客户的备注 |
+| `features/schedule.tsx` | 0+2 | 时段开始/结束时间（原「例如 09:30」改写为「请输入时间，例如 09:30」） |
+| `features/history.tsx` | 0+1 | 历史检索（改写为「请输入…」句式） |
+| `features/lifecycle.tsx` / `backups.tsx` / `downloads.tsx` / `client.tsx` | 各 1 | 纠正原因、备份口令、下载文件名关键词、客户访问码 |
+| `components/ui/fields.tsx` | 3 | `ColorField` / `DateTimeField` / `MoneyField`（见下方死代码说明） |
+
+### 文案规范
+
+统一为「请输入 + 说明或示例」，示例用中文逗号引出，数字与单位间留空格：
+
+- 必填、含义唯一的直白写：`请输入你的称呼，例如：小林`、`请输入你的微信号，方便摄影师联系你`、`请输入 4 位数字访问码`、`请输入至少 10 位密码`。
+- 需要格式约束的写清约束：`请输入用户名，3～40 位字母或数字`、`请输入公开页地址，例如：xiaolin-studio`、`请输入至少 12 位的备份口令`、`请输入给工作室的原因说明，至少 5 个字`。
+- 有明确取值习惯的给示例：`请输入价格说明，例如：¥2999 含 10 张精修`、`请输入时间，例如 09:30`、`请输入意向日期，例如：12 月中旬的周末`。
+- 批量重复的字段仍带序号语义：问卷题干 `请输入题干，例如：想拍什么类型的照片？`、选项 `请输入选项，每行一项，例如：个人写真`。
+
+`Input` / `Textarea` 用的是全局 `input` 工具类（`globals.css:122` 的 `@utility input` 已含 `placeholder:text-muted`），因此**没有新增任何 CSS**，占位文字自动是次级灰、和已填内容区分得开。
+
+### 两处特殊处理
+
+1. **公开问卷的单选题下拉**。`Select` 是「原生 `select` 隐藏 + `button[role=combobox]` 显示 `.select-value` 文案 + 自定义 listbox」的结构，没有 placeholder 概念，占位语义由空选项承担。原空选项是硬编码的 `请选择`，客户看不出这一项在问什么，于是改为按题干生成：
+
+   ```ts
+   /** 题干带问号/冒号时去掉尾标点，拼成「请输入XXX」的占位提示。 */
+   const promptLabel=(label:string)=>label.replace(/[？?：:。.、，,\s]+$/,'').slice(0,20);
+   ```
+
+   空选项变成 `<option value="">请选择{promptLabel(q.label)}</option>`，即「请选择想拍什么类型的照片」；短文本题的 placeholder 也复用同一函数（`请输入${promptLabel(q.label)}`），`fixed:'name'` 单独给 `请输入你的称呼，例如：小林`（默认问卷里 q1 题干就叫「怎么称呼你？」，直接拼接会读成「请输入怎么称呼你」）。函数截断 20 字，避免工作室自定义长题干把下拉挤成两行。`data-value` 与 `required` 的 `setCustomValidity('请选择一项')` 都没动，所以断言 `data-value` 的既有用例不受影响（`grep "'请选择'" tests/e2e` 为空）。
+
+2. **`.honeypot` 蜜罐字段不加提示**。公开问卷表单第一个字段是 `<label className="honeypot" aria-hidden="true">网站地址<input name="website" tabIndex={-1}>`，用于识别自动填充的机器人。它必须对真人不可见、对脚本像正常字段，加「请输入网站地址」反而会诱导真人填写、也会让脚本判断出这是陷阱。因此**审计用例显式跳过 `.honeypot`**。
+
+`components/ui/fields.tsx` 的 `ColorField` / `DateTimeField` / `MoneyField` 全仓库零引用（`grep -rn "ColorField\|MoneyField\|DateTimeField\|ui/fields"` 为空），是早期遗留死代码。本轮不删（不在用户诉求内），但把里面的英文占位（`#1A2B3C`、`Pick a date and time`、`0.00`）一并改成中文，避免哪天被重新引用时又留下中英混排。
+
+### T141 写法
+
+```ts
+const audit=async(context:string)=>{ /* 遍历可见 input/textarea，跳过 .honeypot，placeholder 为空即记入 missing */ };
+for(const width of [390,1440]){ /* 公开问卷：断言四处具体文案 + audit */ }
+for(const [path,context] of [['/studio/new','新建项目'],['/studio/settings','工作室设置'],['/studio/galleries','图库列表'],['/studio/history','历史记录']]){ /* 桌面 audit */ }
+```
+
+审计选择器排掉 `checkbox/radio/hidden/file/color`，逐项 `isVisible()` 后取 `placeholder`，空则把 `id || aria-label || name || outerHTML 前 60 字`记进 `missing`，最后 `expect(missing).toEqual([])`；同时 `expect(total).toBeGreaterThan(0)` 防止选择器写错后「零字段零缺失」假通过。公开问卷部分除了泛化审计，还钉住四条具体文案（`请输入你的称呼，例如：小林` / `请输入你的微信号，方便摄影师联系你` / `请输入 4 位数字访问码` / 下拉含「请选择想拍什么类型的照片」），保证文案被改坏时能立刻定位。
+
+### 本地实际验证
+
+Playwright 真实 Chrome 渠道、单 worker、retries 0，复用 18186/18184 隔离库，未重启/build/typegen。
+
+- T141 单跑 `1 passed (5.6s)`，合计 7.8s。
+- 受影响六 spec（presales + galleries + interface-feedback + delivery + action-placement + account）共 **73 项 6.7 分钟、`72 passed`**。
+- 唯一 failed 是 `account.spec.ts:18` UI03/AT39：`locator.click` 等成员列表行内 `member-…@example.test` 的「移除」按钮 15s 超时。单跑复现（19.3s）后 `git stash push -u` 回到 HEAD `9d45bd3` 复跑**同样失败**（`1 failed (19.3s)`），确认与本轮 placeholder 改动无关，判为既有失败，未改用例。
+- root 与 Web `tsc --noEmit` 通过；`check-architecture.mjs` 输出 `Web/contracts boundary passes`；`git diff --check` 干净；18 个改动文件 eslint `0 errors, 25 warnings`（全部为既有的 `react-hooks/set-state-in-effect`、`@next/next/no-img-element`）。
+- 不扩称微信/手机真机、真实输入法或生产验收；占位文字在真实软键盘弹起时的遮挡未纳入本轮证据。
